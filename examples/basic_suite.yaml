@@ -1,0 +1,38 @@
+name: basic-reasoning-suite
+version: "1.0"
+description: "Basic reasoning and deterministic formatting benchmarks for AI agents."
+tasks:
+  - id: math-01
+    name: "Simple Addition"
+    prompt: "echo: 742"
+    expected_output: "742"
+    evaluators:
+      - type: exact_match
+        expected: "742"
+
+  - id: text-01
+    name: "Key Fact Extraction"
+    prompt: "echo: Python was created by Guido van Rossum in 1991."
+    evaluators:
+      - type: contains
+        expected:
+          - "Guido van Rossum"
+          - "1991"
+
+  - id: json-01
+    name: "Structured Output Extraction"
+    prompt: 'json: {"status": "ok", "code": 200, "user_id": "usr_991"}'
+    evaluators:
+      - type: json_schema
+        expected:
+          status: "ok"
+          code: 200
+          user_id: "usr_991"
+
+  - id: regex-01
+    name: "Order Code Extraction"
+    prompt: "echo: Your reference code is ORD-98421-X."
+    evaluators:
+      - type: regex
+        options:
+          pattern: "ORD-\\d{5}-[A-Z]"

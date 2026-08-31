@@ -1,0 +1,53 @@
+name: tool-use-benchmark
+version: "1.0"
+description: "Evaluates multi-step tool calling, argument precision, and execution traces."
+tasks:
+  - id: tool-weather-01
+    name: "Weather Lookup"
+    prompt: "What is the temperature in Tokyo?"
+    tools:
+      - name: get_weather
+        description: "Get current weather info"
+        parameters:
+          city:
+            type: string
+            description: "Target city name"
+            required: true
+        mock_response:
+          city: "Tokyo"
+          temp_celsius: 22
+          condition: "Clear"
+    evaluators:
+      - type: tool_call_count
+        options:
+          tool_name: get_weather
+          exact_calls: 1
+      - type: tool_argument
+        options:
+          tool_name: get_weather
+          expected_args:
+            city: "Tokyo"
+
+  - id: tool-pipeline-01
+    name: "Search then Summarize Pipeline"
+    prompt: "Search for latest release and format report"
+    tools:
+      - name: search_docs
+        description: "Search documentation database"
+        parameters:
+          query:
+            type: string
+            required: true
+      - name: format_markdown
+        description: "Format raw results into markdown"
+        parameters:
+          raw_text:
+            type: string
+            required: true
+    evaluators:
+      - type: tool_call_sequence
+        options:
+          sequence:
+            - search_docs
+            - format_markdown
+          strict: true
