@@ -1,6 +1,6 @@
 # AgentBench 🤖📊
 
-[![CI](https://github.com/eyupcodes/ModelMeter/actions/workflows/ci.yml/badge.svg)](https://github.com/eyupcodes/ModelMeter/actions)
+[![CI](https://github.com/eyupcodes/AgentBench/actions/workflows/ci.yml/badge.svg)](https://github.com/eyupcodes/AgentBench/actions)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -33,8 +33,8 @@ AgentBench provides a clean abstraction between **Tasks/Suites**, **Agent Adapte
 ### From PyPI / Source
 ```bash
 # Clone repository
-git clone https://github.com/eyupcodes/ModelMeter.git
-cd ModelMeter
+git clone https://github.com/eyupcodes/AgentBench.git
+cd AgentBench
 
 # Install in editable mode
 pip install -e .
