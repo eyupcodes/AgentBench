@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class EventType(str, Enum):
     """Types of events emitted during an agent's task execution."""
+
     TASK_START = "task_start"
     TASK_END = "task_end"
     THOUGHT = "thought"
@@ -22,6 +23,7 @@ class EventType(str, Enum):
 
 class TokenUsage(BaseModel):
     """Token consumption and estimated cost tracking."""
+
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
@@ -32,12 +34,15 @@ class TokenUsage(BaseModel):
             prompt_tokens=self.prompt_tokens + other.prompt_tokens,
             completion_tokens=self.completion_tokens + other.completion_tokens,
             total_tokens=self.total_tokens + other.total_tokens,
-            estimated_cost_usd=round(self.estimated_cost_usd + other.estimated_cost_usd, 6),
+            estimated_cost_usd=round(
+                self.estimated_cost_usd + other.estimated_cost_usd, 6
+            ),
         )
 
 
 class ToolCallEvent(BaseModel):
     """Detailed log of a single tool call execution."""
+
     tool_name: str
     call_id: str | None = None
     tool_input: dict[str, Any] = Field(default_factory=dict)
@@ -50,6 +55,7 @@ class ToolCallEvent(BaseModel):
 
 class AgentEvent(BaseModel):
     """A generic structured event emitted during benchmark execution."""
+
     event_type: EventType
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     message: str | None = None

@@ -36,7 +36,10 @@ class MockAgent(BaseAgent):
         self.tool_call_plans = tool_call_plans or {}
         self.delay_seconds = delay_seconds
         self.simulate_error = simulate_error
-        self.tokens_per_call = tokens_per_call or {"prompt_tokens": 100, "completion_tokens": 50}
+        self.tokens_per_call = tokens_per_call or {
+            "prompt_tokens": 100,
+            "completion_tokens": 50,
+        }
 
     async def run(self, task: Task, context: AgentExecutionContext) -> AgentResponse:
         context.record_thought(f"Starting mock execution for task {task.id}")

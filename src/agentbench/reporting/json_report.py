@@ -6,7 +6,9 @@ from pathlib import Path
 from agentbench.models.report import BenchmarkReport
 
 
-def save_report_json(report: BenchmarkReport, file_path: str | Path, indent: int = 2) -> Path:
+def save_report_json(
+    report: BenchmarkReport, file_path: str | Path, indent: int = 2
+) -> Path:
     """Serialize a BenchmarkReport to a JSON file."""
     path = Path(file_path)
     path.parent.mkdir(parents=True, exist_ok=True)

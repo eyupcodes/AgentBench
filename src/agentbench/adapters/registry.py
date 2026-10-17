@@ -33,6 +33,7 @@ def get_adapter(name_or_alias: str, **kwargs: Any) -> BaseAgent:
     # Support dotted python import: "my_module.MyCustomAgent"
     if "." in name_or_alias:
         import importlib
+
         module_path, class_name = name_or_alias.rsplit(".", 1)
         module = importlib.import_module(module_path)
         cls = getattr(module, class_name)
@@ -41,7 +42,9 @@ def get_adapter(name_or_alias: str, **kwargs: Any) -> BaseAgent:
         return cls(**kwargs)
 
     available = ", ".join(list_adapters())
-    raise KeyError(f"Adapter '{name_or_alias}' not found. Available registered adapters: {available}")
+    raise KeyError(
+        f"Adapter '{name_or_alias}' not found. Available registered adapters: {available}"
+    )
 
 
 def list_adapters() -> list[str]:

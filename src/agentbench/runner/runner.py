@@ -39,7 +39,11 @@ class BenchmarkRunner:
         started_at = datetime.now(timezone.utc)
 
         max_attempts = max(1, task.max_retries)
-        timeout_sec = task.timeout_seconds if task.timeout_seconds > 0 else self.options.default_timeout_seconds
+        timeout_sec = (
+            task.timeout_seconds
+            if task.timeout_seconds > 0
+            else self.options.default_timeout_seconds
+        )
 
         all_events: list[AgentEvent] = []
         all_tool_calls = []

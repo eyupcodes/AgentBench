@@ -12,6 +12,7 @@ from agentbench.models.task import EvaluatorConfig, Task
 
 class EvaluationContext(BaseModel):
     """Contextual information provided to evaluators to score a task execution."""
+
     task: Task
     output: Any
     tool_calls: list[ToolCallEvent] = Field(default_factory=list)

@@ -24,9 +24,7 @@ async def main():
                 name="Sentiment Analysis",
                 prompt="Analyze sentiment of: 'The benchmark runner works wonderfully!'",
                 expected_output="positive",
-                evaluators=[
-                    EvaluatorConfig(type="exact_match", expected="positive")
-                ],
+                evaluators=[EvaluatorConfig(type="exact_match", expected="positive")],
             ),
             Task(
                 id="sdk-task-2",
@@ -45,7 +43,11 @@ async def main():
         responses={"sdk-task-1": "positive"},
         tool_call_plans={
             "sdk-task-2": [
-                {"name": "fetch_records", "input": {"limit": 10}, "output": [10, 20, 30]}
+                {
+                    "name": "fetch_records",
+                    "input": {"limit": 10},
+                    "output": [10, 20, 30],
+                }
             ]
         },
     )

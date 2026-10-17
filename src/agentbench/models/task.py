@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class ToolParameter(BaseModel):
     """Specification of a tool input parameter."""
+
     type: str = "string"
     description: str = ""
     required: bool = False
@@ -15,6 +16,7 @@ class ToolParameter(BaseModel):
 
 class ToolDefinition(BaseModel):
     """Definition of a mock or live tool available to the agent during evaluation."""
+
     name: str
     description: str
     parameters: dict[str, ToolParameter] = Field(default_factory=dict)
@@ -23,6 +25,7 @@ class ToolDefinition(BaseModel):
 
 class EvaluatorConfig(BaseModel):
     """Configuration for a deterministic evaluator."""
+
     type: str  # e.g., "exact_match", "contains", "regex", "json_schema", "tool_call", "custom"
     expected: Any | None = None
     options: dict[str, Any] = Field(default_factory=dict)
@@ -32,6 +35,7 @@ class EvaluatorConfig(BaseModel):
 
 class Task(BaseModel):
     """A single benchmark task for an agent to perform."""
+
     id: str
     name: str
     description: str | None = None
@@ -47,6 +51,7 @@ class Task(BaseModel):
 
 class TaskSuite(BaseModel):
     """A collection of tasks that form a benchmark suite."""
+
     name: str
     version: str = "1.0"
     description: str | None = None

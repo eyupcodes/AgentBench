@@ -11,6 +11,7 @@ from agentbench.models.result import RunStatus, TaskRunResult
 
 class SuiteMetrics(BaseModel):
     """Aggregated numerical and statistical metrics across a benchmark suite."""
+
     total_tasks: int = 0
     passed_tasks: int = 0
     failed_tasks: int = 0
@@ -29,6 +30,7 @@ class SuiteMetrics(BaseModel):
 
 class BenchmarkReport(BaseModel):
     """Complete benchmark report containing suite configuration, metrics, and itemized results."""
+
     suite_name: str
     suite_version: str = "1.0"
     agent_name: str
@@ -49,12 +51,21 @@ class BenchmarkReport(BaseModel):
         """Compute aggregate metrics and construct a BenchmarkReport."""
         total = len(results)
         passed = sum(1 for r in results if r.status == RunStatus.SUCCESS and r.passed)
-        failed = sum(1 for r in results if r.status == RunStatus.FAILURE or (r.status == RunStatus.SUCCESS and not r.passed))
+        failed = sum(
+            1
+            for r in results
+            if r.status == RunStatus.FAILURE
+            or (r.status == RunStatus.SUCCESS and not r.passed)
+        )
         timeouts = sum(1 for r in results if r.status == RunStatus.TIMEOUT)
         errors = sum(1 for r in results if r.status == RunStatus.ERROR)
 
         pass_rate = round((passed / total) * 100.0, 2) if total > 0 else 0.0
-        avg_score = round(sum(r.overall_score for r in results) / total, 4) if total > 0 else 0.0
+        avg_score = (
+            round(sum(r.overall_score for r in results) / total, 4)
+            if total > 0
+            else 0.0
+        )
         total_time = round(sum(r.execution_time_seconds for r in results), 3)
         avg_time = round(total_time / total, 3) if total > 0 else 0.0
 

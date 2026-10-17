@@ -11,6 +11,7 @@ from agentbench.models.event import AgentEvent, TokenUsage, ToolCallEvent
 
 class RunStatus(str, Enum):
     """Overall status of a task execution."""
+
     SUCCESS = "success"
     FAILURE = "failure"
     TIMEOUT = "timeout"
@@ -19,6 +20,7 @@ class RunStatus(str, Enum):
 
 class EvaluationResult(BaseModel):
     """Result from a single deterministic evaluation check."""
+
     evaluator_type: str
     passed: bool
     score: float = Field(ge=0.0, le=1.0, default=1.0)
@@ -30,6 +32,7 @@ class EvaluationResult(BaseModel):
 
 class TaskRunResult(BaseModel):
     """Complete result record of running an agent on a single task."""
+
     task_id: str
     task_name: str
     agent_name: str

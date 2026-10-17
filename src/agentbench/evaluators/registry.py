@@ -1,6 +1,5 @@
 """Evaluator registry and factory."""
 
-
 from agentbench.evaluators.base import BaseEvaluator
 from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.deterministic import (
@@ -45,6 +44,7 @@ def get_evaluator(config: EvaluatorConfig) -> BaseEvaluator:
     # Support dotted class path
     if "." in config.type:
         import importlib
+
         module_path, class_name = config.type.rsplit(".", 1)
         module = importlib.import_module(module_path)
         cls = getattr(module, class_name)
@@ -53,7 +53,9 @@ def get_evaluator(config: EvaluatorConfig) -> BaseEvaluator:
         return cls(config=config)
 
     available = ", ".join(list_evaluators())
-    raise KeyError(f"Unknown evaluator type: '{config.type}'. Available types: {available}")
+    raise KeyError(
+        f"Unknown evaluator type: '{config.type}'. Available types: {available}"
+    )
 
 
 def list_evaluators() -> list[str]:

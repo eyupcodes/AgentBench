@@ -29,7 +29,9 @@ def load_suite(file_path: str | Path) -> TaskSuite:
             raw_data = json.loads(content)
 
     if not isinstance(raw_data, dict):
-        raise ValueError(f"Invalid suite file format in {file_path}. Root must be a dictionary.")
+        raise ValueError(
+            f"Invalid suite file format in {file_path}. Root must be a dictionary."
+        )
 
     return TaskSuite.model_validate(raw_data)
 

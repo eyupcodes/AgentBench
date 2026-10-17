@@ -64,10 +64,14 @@ def test_cli_run_suite():
             app,
             [
                 "run",
-                "--suite", str(suite_path),
-                "--agent", "scripted",
-                "--output", str(out_json),
-                "--export-md", str(out_md),
+                "--suite",
+                str(suite_path),
+                "--agent",
+                "scripted",
+                "--output",
+                str(out_json),
+                "--export-md",
+                str(out_md),
             ],
         )
 

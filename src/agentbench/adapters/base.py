@@ -12,6 +12,7 @@ from agentbench.models.task import Task
 
 class AgentResponse(BaseModel):
     """Output returned by an agent after processing a task."""
+
     output: Any
     tool_calls: list[ToolCallEvent] = Field(default_factory=list)
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
@@ -21,7 +22,9 @@ class AgentResponse(BaseModel):
 class AgentExecutionContext:
     """Context provided to an agent during task execution to emit events and track actions."""
 
-    def __init__(self, task: Task, event_callback: Callable[[AgentEvent], None] | None = None) -> None:
+    def __init__(
+        self, task: Task, event_callback: Callable[[AgentEvent], None] | None = None
+    ) -> None:
         self.task = task
         self.event_callback = event_callback
         self.events: list[AgentEvent] = []
@@ -34,7 +37,9 @@ class AgentExecutionContext:
         if self.event_callback:
             self.event_callback(event)
 
-    def record_thought(self, message: str, metadata: dict[str, Any] | None = None) -> None:
+    def record_thought(
+        self, message: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Record an internal reasoning or plan step."""
         event = AgentEvent(
             event_type=EventType.THOUGHT,
@@ -96,7 +101,9 @@ class AgentExecutionContext:
 class BaseAgent(ABC):
     """Abstract interface for benchmarkable agent adapters."""
 
-    def __init__(self, name: str | None = None, config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, name: str | None = None, config: dict[str, Any] | None = None
+    ) -> None:
         self.name = name or self.__class__.__name__
         self.config = config or {}
 

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class RunnerOptions(BaseModel):
     """Execution options for running a benchmark suite."""
+
     max_concurrency: int = 1
     default_timeout_seconds: float = 30.0
     default_max_retries: int = 1

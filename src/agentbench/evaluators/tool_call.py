@@ -14,7 +14,9 @@ class ToolCallCountEvaluator(BaseEvaluator):
         specific_tool = self.config.options.get("tool_name")
 
         if specific_tool:
-            actual_count = sum(1 for tc in context.tool_calls if tc.tool_name == specific_tool)
+            actual_count = sum(
+                1 for tc in context.tool_calls if tc.tool_name == specific_tool
+            )
         else:
             actual_count = len(context.tool_calls)
 
@@ -53,13 +55,21 @@ class ToolCallSequenceEvaluator(BaseEvaluator):
         strict = self.config.options.get("strict", False)
 
         if strict:
-            passed = (actual_sequence == expected_sequence)
-            reason = "Exact sequence matched" if passed else f"Expected sequence {expected_sequence}, got {actual_sequence}"
+            passed = actual_sequence == expected_sequence
+            reason = (
+                "Exact sequence matched"
+                if passed
+                else f"Expected sequence {expected_sequence}, got {actual_sequence}"
+            )
         else:
             # Subsequence match: expected tools appear in order within actual sequence
             it = iter(actual_sequence)
             passed = all(tool in it for tool in expected_sequence)
-            reason = "Expected tool sequence contained in trace" if passed else f"Tools not called in order {expected_sequence} (actual: {actual_sequence})"
+            reason = (
+                "Expected tool sequence contained in trace"
+                if passed
+                else f"Tools not called in order {expected_sequence} (actual: {actual_sequence})"
+            )
 
         return EvaluationResult(
             evaluator_type="tool_call_sequence",
@@ -78,7 +88,11 @@ class ToolArgumentEvaluator(BaseEvaluator):
         tool_name = self.config.options.get("tool_name")
         expected_args = self.config.options.get("expected_args", {})
 
-        matching_calls = [tc for tc in context.tool_calls if tc.tool_name == tool_name] if tool_name else context.tool_calls
+        matching_calls = (
+            [tc for tc in context.tool_calls if tc.tool_name == tool_name]
+            if tool_name
+            else context.tool_calls
+        )
 
         if not matching_calls:
             return EvaluationResult(

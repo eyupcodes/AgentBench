@@ -43,18 +43,14 @@ async def test_http_llm_mocked_success():
                         {
                             "function": {
                                 "name": "get_weather",
-                                "arguments": '{"city": "Paris"}'
+                                "arguments": '{"city": "Paris"}',
                             }
                         }
-                    ]
+                    ],
                 }
             }
         ],
-        "usage": {
-            "prompt_tokens": 15,
-            "completion_tokens": 5,
-            "total_tokens": 20
-        }
+        "usage": {"prompt_tokens": 15, "completion_tokens": 5, "total_tokens": 20},
     }
 
     mock_resp_bytes = json.dumps(fake_response).encode("utf-8")
@@ -109,16 +105,21 @@ def test_loader_invalid_data():
 
 def test_evaluator_error_cases():
     # Regex bad pattern
-    bad_regex = RegexEvaluator(EvaluatorConfig(type="regex", options={"pattern": "[unclosed"}))
+    bad_regex = RegexEvaluator(
+        EvaluatorConfig(type="regex", options={"pattern": "[unclosed"})
+    )
     task = Task(id="t1", name="T", prompt="p")
     from agentbench.evaluators.base import EvaluationContext
+
     eval_ctx = EvaluationContext(task=task, output="test")
     res = bad_regex.evaluate(eval_ctx)
     assert res.passed is False
     assert "Invalid regular expression" in res.reason
 
     # Numeric tolerance non-number
-    num_eval = NumericToleranceEvaluator(EvaluatorConfig(type="numeric_tolerance", expected=10))
+    num_eval = NumericToleranceEvaluator(
+        EvaluatorConfig(type="numeric_tolerance", expected=10)
+    )
     res_num = num_eval.evaluate(EvaluationContext(task=task, output="not-a-number"))
     assert res_num.passed is False
 
@@ -132,8 +133,16 @@ def test_adapter_registry_dotted_import():
 
 
 def test_evaluator_registry_dotted_import():
-    evaluator = get_evaluator(EvaluatorConfig(type="agentbench.evaluators.deterministic.ExactMatchEvaluator", expected="abc"))
-    assert evaluator.config.type == "agentbench.evaluators.deterministic.ExactMatchEvaluator"
+    evaluator = get_evaluator(
+        EvaluatorConfig(
+            type="agentbench.evaluators.deterministic.ExactMatchEvaluator",
+            expected="abc",
+        )
+    )
+    assert (
+        evaluator.config.type
+        == "agentbench.evaluators.deterministic.ExactMatchEvaluator"
+    )
 
     with pytest.raises(KeyError, match="Unknown evaluator type"):
         get_evaluator(EvaluatorConfig(type="non_existent_evaluator_xyz"))

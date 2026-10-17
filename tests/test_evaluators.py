@@ -28,8 +28,10 @@ def _make_context(output, tool_calls=None, expected=None):
 
 
 def test_exact_match_evaluator():
-    evaluator = ExactMatchEvaluator(EvaluatorConfig(type="exact_match", expected="hello world"))
-    
+    evaluator = ExactMatchEvaluator(
+        EvaluatorConfig(type="exact_match", expected="hello world")
+    )
+
     # Success
     res1 = evaluator.evaluate(_make_context("hello world"))
     assert res1.passed is True
@@ -46,8 +48,10 @@ def test_exact_match_evaluator():
 
 
 def test_contains_evaluator():
-    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected=["Paris", "France"]))
-    
+    evaluator = ContainsEvaluator(
+        EvaluatorConfig(type="contains", expected=["Paris", "France"])
+    )
+
     res1 = evaluator.evaluate(_make_context("The capital of France is Paris."))
     assert res1.passed is True
 
@@ -81,7 +85,9 @@ def test_json_schema_evaluator():
         )
     )
 
-    res1 = evaluator.evaluate(_make_context('{"name": "Alice", "age": 30, "extra": true}'))
+    res1 = evaluator.evaluate(
+        _make_context('{"name": "Alice", "age": 30, "extra": true}')
+    )
     assert res1.passed is True
 
     res2 = evaluator.evaluate(_make_context('{"name": "Alice", "age": 35}'))
@@ -94,7 +100,9 @@ def test_json_schema_evaluator():
 
 def test_numeric_tolerance_evaluator():
     evaluator = NumericToleranceEvaluator(
-        EvaluatorConfig(type="numeric_tolerance", expected=3.14159, options={"tolerance": 0.001})
+        EvaluatorConfig(
+            type="numeric_tolerance", expected=3.14159, options={"tolerance": 0.001}
+        )
     )
     assert evaluator.evaluate(_make_context(3.1419)).passed is True
     assert evaluator.evaluate(_make_context(3.1500)).passed is False
@@ -114,13 +122,18 @@ def test_tool_call_evaluators():
 
     # Sequence evaluator
     seq_eval = ToolCallSequenceEvaluator(
-        EvaluatorConfig(type="tool_call_sequence", options={"sequence": ["search", "calculator"]})
+        EvaluatorConfig(
+            type="tool_call_sequence", options={"sequence": ["search", "calculator"]}
+        )
     )
     assert seq_eval.evaluate(_make_context("done", tool_calls=tools)).passed is True
 
     # Argument evaluator
     arg_eval = ToolArgumentEvaluator(
-        EvaluatorConfig(type="tool_argument", options={"tool_name": "search", "expected_args": {"query": "weather"}})
+        EvaluatorConfig(
+            type="tool_argument",
+            options={"tool_name": "search", "expected_args": {"query": "weather"}},
+        )
     )
     assert arg_eval.evaluate(_make_context("done", tool_calls=tools)).passed is True
 
