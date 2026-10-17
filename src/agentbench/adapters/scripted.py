@@ -1,6 +1,8 @@
 """Scripted rule-based agent for deterministic scenario evaluations."""
 
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
+
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.models.task import Task
 
@@ -14,13 +16,15 @@ class ScriptedAgent(BaseAgent):
     def __init__(
         self,
         name: str = "ScriptedAgent",
-        handlers: Optional[Dict[str, Callable[[Task, AgentExecutionContext], Any]]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        handlers: dict[str, Callable[[Task, AgentExecutionContext], Any]] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name, config=config)
         self.handlers = handlers or {}
 
-    def register_handler(self, task_id: str, handler: Callable[[Task, AgentExecutionContext], Any]) -> None:
+    def register_handler(
+        self, task_id: str, handler: Callable[[Task, AgentExecutionContext], Any]
+    ) -> None:
         """Register a dynamic python handler for a specific task ID."""
         self.handlers[task_id] = handler
 
@@ -39,7 +43,9 @@ class ScriptedAgent(BaseAgent):
             )
 
         # Default handler: parse task prompt or answer basic math/json
-        context.record_thought("No specific scripted rule found, falling back to default heuristic")
+        context.record_thought(
+            "No specific scripted rule found, falling back to default heuristic"
+        )
         prompt = task.prompt.strip()
 
         # If prompt contains expected format like "Calculate: 2 + 2"
@@ -47,6 +53,7 @@ class ScriptedAgent(BaseAgent):
             output = prompt[5:].strip()
         elif prompt.lower().startswith("json:"):
             import json
+
             try:
                 output = json.loads(prompt[5:].strip())
             except Exception:

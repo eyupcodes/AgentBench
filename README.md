@@ -176,6 +176,7 @@ from agentbench import (
     print_cli_report,
 )
 
+
 async def run():
     suite = TaskSuite(
         name="SDK Suite",
@@ -185,15 +186,20 @@ async def run():
                 name="Greeting Check",
                 prompt="Say 'Welcome to AgentBench'",
                 expected_output="Welcome to AgentBench",
-                evaluators=[EvaluatorConfig(type="exact_match", expected="Welcome to AgentBench")],
+                evaluators=[
+                    EvaluatorConfig(
+                        type="exact_match", expected="Welcome to AgentBench"
+                    )
+                ],
             )
-        ]
+        ],
     )
 
     agent = MockAgent(default_response="Welcome to AgentBench")
     runner = BenchmarkRunner()
     report = await runner.run_suite(suite, agent)
     print_cli_report(report)
+
 
 asyncio.run(run())
 ```

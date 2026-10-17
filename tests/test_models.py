@@ -1,14 +1,30 @@
 """Unit tests for AgentBench data models."""
 
-from agentbench.models.event import AgentEvent, EventType, TokenUsage, ToolCallEvent
-from agentbench.models.task import EvaluatorConfig, Task, TaskSuite, ToolDefinition, ToolParameter
-from agentbench.models.result import EvaluationResult, RunStatus, TaskRunResult
-from agentbench.models.report import BenchmarkReport, SuiteMetrics
+from agentbench.models.event import TokenUsage, ToolCallEvent
+from agentbench.models.report import BenchmarkReport
+from agentbench.models.result import RunStatus, TaskRunResult
+from agentbench.models.task import (
+    EvaluatorConfig,
+    Task,
+    TaskSuite,
+    ToolDefinition,
+    ToolParameter,
+)
 
 
 def test_token_usage_aggregation():
-    t1 = TokenUsage(prompt_tokens=100, completion_tokens=50, total_tokens=150, estimated_cost_usd=0.002)
-    t2 = TokenUsage(prompt_tokens=200, completion_tokens=80, total_tokens=280, estimated_cost_usd=0.003)
+    t1 = TokenUsage(
+        prompt_tokens=100,
+        completion_tokens=50,
+        total_tokens=150,
+        estimated_cost_usd=0.002,
+    )
+    t2 = TokenUsage(
+        prompt_tokens=200,
+        completion_tokens=80,
+        total_tokens=280,
+        estimated_cost_usd=0.003,
+    )
     combined = t1.add(t2)
 
     assert combined.prompt_tokens == 300
@@ -45,9 +61,7 @@ def test_task_suite_validation():
                         parameters={"msg": ToolParameter(type="string", required=True)},
                     )
                 ],
-                evaluators=[
-                    EvaluatorConfig(type="exact_match", expected="hello")
-                ],
+                evaluators=[EvaluatorConfig(type="exact_match", expected="hello")],
             )
         ],
     )
@@ -67,7 +81,12 @@ def test_benchmark_report_metrics_computation():
         execution_time_seconds=1.5,
         retry_count=0,
         tool_calls=[ToolCallEvent(tool_name="tool_a", tool_input={})],
-        token_usage=TokenUsage(prompt_tokens=100, completion_tokens=20, total_tokens=120, estimated_cost_usd=0.001),
+        token_usage=TokenUsage(
+            prompt_tokens=100,
+            completion_tokens=20,
+            total_tokens=120,
+            estimated_cost_usd=0.001,
+        ),
     )
     r2 = TaskRunResult(
         task_id="t2",
@@ -82,7 +101,12 @@ def test_benchmark_report_metrics_computation():
             ToolCallEvent(tool_name="tool_a", tool_input={}),
             ToolCallEvent(tool_name="tool_b", tool_input={}),
         ],
-        token_usage=TokenUsage(prompt_tokens=150, completion_tokens=30, total_tokens=180, estimated_cost_usd=0.002),
+        token_usage=TokenUsage(
+            prompt_tokens=150,
+            completion_tokens=30,
+            total_tokens=180,
+            estimated_cost_usd=0.002,
+        ),
     )
 
     report = BenchmarkReport.from_results("MySuite", "TestAgent", [r1, r2])

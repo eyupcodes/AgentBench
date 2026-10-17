@@ -2,19 +2,19 @@
 
 import json
 from pathlib import Path
-from typing import Union
+
 import yaml
 
 from agentbench.models.task import TaskSuite
 
 
-def load_suite(file_path: Union[str, Path]) -> TaskSuite:
+def load_suite(file_path: str | Path) -> TaskSuite:
     """Load and validate a TaskSuite from a YAML or JSON file."""
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"Suite file not found: {file_path}")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         content = f.read()
 
     if path.suffix.lower() in [".yaml", ".yml"]:
@@ -29,12 +29,14 @@ def load_suite(file_path: Union[str, Path]) -> TaskSuite:
             raw_data = json.loads(content)
 
     if not isinstance(raw_data, dict):
-        raise ValueError(f"Invalid suite file format in {file_path}. Root must be a dictionary.")
+        raise ValueError(
+            f"Invalid suite file format in {file_path}. Root must be a dictionary."
+        )
 
     return TaskSuite.model_validate(raw_data)
 
 
-def save_suite(suite: TaskSuite, file_path: Union[str, Path]) -> Path:
+def save_suite(suite: TaskSuite, file_path: str | Path) -> Path:
     """Save a TaskSuite to YAML or JSON based on file extension."""
     path = Path(file_path)
     path.parent.mkdir(parents=True, exist_ok=True)

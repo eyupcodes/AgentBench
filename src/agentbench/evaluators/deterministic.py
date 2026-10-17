@@ -2,17 +2,20 @@
 
 import json
 import re
-from typing import Any, Optional
+
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
-from agentbench.models.task import EvaluatorConfig
 
 
 class ExactMatchEvaluator(BaseEvaluator):
     """Evaluates whether the agent output strictly matches the expected value."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        expected = self.config.expected if self.config.expected is not None else context.task.expected_output
+        expected = (
+            self.config.expected
+            if self.config.expected is not None
+            else context.task.expected_output
+        )
         actual = context.output
 
         strip_ws = self.config.options.get("strip", True)
@@ -39,14 +42,16 @@ class ExactMatchEvaluator(BaseEvaluator):
                 exp_val = exp_val.lower()
                 act_val = act_val.lower()
 
-        passed = (exp_val == act_val)
+        passed = exp_val == act_val
         return EvaluationResult(
             evaluator_type="exact_match",
             passed=passed,
             score=1.0 if passed else 0.0,
             expected=expected,
             actual=actual,
-            reason="Outputs match exactly" if passed else f"Expected '{expected}', got '{actual}'",
+            reason="Outputs match exactly"
+            if passed
+            else f"Expected '{expected}', got '{actual}'",
         )
 
 
@@ -54,7 +59,11 @@ class ContainsEvaluator(BaseEvaluator):
     """Evaluates whether the agent output contains required substring(s) or keywords."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        expected = self.config.expected if self.config.expected is not None else context.task.expected_output
+        expected = (
+            self.config.expected
+            if self.config.expected is not None
+            else context.task.expected_output
+        )
         actual = str(context.output or "")
         case_sensitive = self.config.options.get("case_sensitive", False)
 
@@ -62,7 +71,15 @@ class ContainsEvaluator(BaseEvaluator):
             actual = actual.lower()
 
         # Expected can be a single string or a list of required substrings
-        targets = [expected] if isinstance(expected, str) else (list(expected) if isinstance(expected, (list, tuple)) else [str(expected)])
+        targets = (
+            [expected]
+            if isinstance(expected, str)
+            else (
+                list(expected)
+                if isinstance(expected, (list, tuple))
+                else [str(expected)]
+            )
+        )
         missing = []
 
         for target in targets:
@@ -73,7 +90,11 @@ class ContainsEvaluator(BaseEvaluator):
 
         passed = len(missing) == 0
         total_targets = len(targets)
-        score = round((total_targets - len(missing)) / total_targets, 2) if total_targets > 0 else 0.0
+        score = (
+            round((total_targets - len(missing)) / total_targets, 2)
+            if total_targets > 0
+            else 0.0
+        )
 
         return EvaluationResult(
             evaluator_type="contains",
@@ -81,7 +102,9 @@ class ContainsEvaluator(BaseEvaluator):
             score=score,
             expected=expected,
             actual=context.output,
-            reason="All target substrings found" if passed else f"Missing expected substrings: {missing}",
+            reason="All target substrings found"
+            if passed
+            else f"Missing expected substrings: {missing}",
         )
 
 
@@ -89,7 +112,9 @@ class RegexEvaluator(BaseEvaluator):
     """Evaluates whether the agent output matches a regular expression pattern."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        pattern_str = self.config.options.get("pattern") or str(self.config.expected or "")
+        pattern_str = self.config.options.get("pattern") or str(
+            self.config.expected or ""
+        )
         actual = str(context.output or "")
 
         flags = 0
@@ -108,7 +133,9 @@ class RegexEvaluator(BaseEvaluator):
                 score=1.0 if passed else 0.0,
                 expected=pattern_str,
                 actual=context.output,
-                reason="Pattern matched" if passed else f"Pattern '{pattern_str}' did not match output",
+                reason="Pattern matched"
+                if passed
+                else f"Pattern '{pattern_str}' did not match output",
             )
         except re.error as e:
             return EvaluationResult(
@@ -162,7 +189,7 @@ class JSONSchemaEvaluator(BaseEvaluator):
                 if k in actual and actual[k] != exp_v:
                     mismatched_values.append(f"{k}: expected {exp_v}, got {actual[k]}")
 
-        passed = (len(missing_keys) == 0 and len(mismatched_values) == 0)
+        passed = len(missing_keys) == 0 and len(mismatched_values) == 0
         reasons = []
         if missing_keys:
             reasons.append(f"Missing required keys: {missing_keys}")
@@ -183,7 +210,11 @@ class NumericToleranceEvaluator(BaseEvaluator):
     """Evaluates whether numeric output is within an acceptable absolute/relative tolerance."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        expected = self.config.expected if self.config.expected is not None else context.task.expected_output
+        expected = (
+            self.config.expected
+            if self.config.expected is not None
+            else context.task.expected_output
+        )
         actual = context.output
         tolerance = float(self.config.options.get("tolerance", 1e-5))
 
@@ -198,7 +229,9 @@ class NumericToleranceEvaluator(BaseEvaluator):
                 score=1.0 if passed else 0.0,
                 expected=exp_num,
                 actual=act_num,
-                reason=f"Diff {diff:.6f} <= tolerance {tolerance}" if passed else f"Diff {diff:.6f} > tolerance {tolerance}",
+                reason=f"Diff {diff:.6f} <= tolerance {tolerance}"
+                if passed
+                else f"Diff {diff:.6f} > tolerance {tolerance}",
             )
         except (ValueError, TypeError) as e:
             return EvaluationResult(

@@ -1,6 +1,8 @@
 """Custom Python function evaluator hook."""
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
+
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
 from agentbench.models.task import EvaluatorConfig
@@ -11,8 +13,8 @@ class CustomEvaluator(BaseEvaluator):
 
     def __init__(
         self,
-        config: Optional[EvaluatorConfig] = None,
-        fn: Optional[Callable[[EvaluationContext], Any]] = None,
+        config: EvaluatorConfig | None = None,
+        fn: Callable[[EvaluationContext], Any] | None = None,
     ) -> None:
         super().__init__(config=config)
         self.fn = fn
@@ -23,6 +25,7 @@ class CustomEvaluator(BaseEvaluator):
             fn_path = self.config.options["function"]
             if isinstance(fn_path, str) and "." in fn_path:
                 import importlib
+
                 module_path, fn_name = fn_path.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 fn_to_call = getattr(module, fn_name)
@@ -45,7 +48,9 @@ class CustomEvaluator(BaseEvaluator):
                     passed=res,
                     score=1.0 if res else 0.0,
                     actual=context.output,
-                    reason="Custom function passed" if res else "Custom function returned False",
+                    reason="Custom function passed"
+                    if res
+                    else "Custom function returned False",
                 )
             if isinstance(res, (int, float)):
                 passed = res >= 1.0

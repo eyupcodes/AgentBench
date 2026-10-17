@@ -2,8 +2,8 @@
 
 import asyncio
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any, Callable, List, Optional
 
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.evaluators.base import EvaluationContext
@@ -20,10 +20,10 @@ class BenchmarkRunner:
 
     def __init__(
         self,
-        options: Optional[RunnerOptions] = None,
-        on_event: Optional[Callable[[AgentEvent], None]] = None,
-        on_task_start: Optional[Callable[[Task], None]] = None,
-        on_task_complete: Optional[Callable[[TaskRunResult], None]] = None,
+        options: RunnerOptions | None = None,
+        on_event: Callable[[AgentEvent], None] | None = None,
+        on_task_start: Callable[[Task], None] | None = None,
+        on_task_complete: Callable[[TaskRunResult], None] | None = None,
     ) -> None:
         self.options = options or RunnerOptions()
         self.on_event = on_event
@@ -39,16 +39,20 @@ class BenchmarkRunner:
         started_at = datetime.now(timezone.utc)
 
         max_attempts = max(1, task.max_retries)
-        timeout_sec = task.timeout_seconds if task.timeout_seconds > 0 else self.options.default_timeout_seconds
+        timeout_sec = (
+            task.timeout_seconds
+            if task.timeout_seconds > 0
+            else self.options.default_timeout_seconds
+        )
 
-        all_events: List[AgentEvent] = []
+        all_events: list[AgentEvent] = []
         all_tool_calls = []
         cumulative_tokens = TokenUsage()
         retry_count = 0
 
-        last_error: Optional[str] = None
+        last_error: str | None = None
         last_status = RunStatus.ERROR
-        agent_response: Optional[AgentResponse] = None
+        agent_response: AgentResponse | None = None
 
         for attempt in range(1, max_attempts + 1):
             if attempt > 1:
@@ -120,7 +124,7 @@ class BenchmarkRunner:
         completed_at = datetime.now(timezone.utc)
 
         # Run evaluators if we got an agent response
-        evaluations: List[EvaluationResult] = []
+        evaluations: list[EvaluationResult] = []
         overall_passed = False
         overall_score = 0.0
 
@@ -181,7 +185,7 @@ class BenchmarkRunner:
 
     async def run_suite(self, suite: TaskSuite, agent: BaseAgent) -> BenchmarkReport:
         """Run all tasks in a TaskSuite against the specified agent adapter."""
-        results: List[TaskRunResult] = []
+        results: list[TaskRunResult] = []
 
         if self.options.max_concurrency <= 1:
             for task in suite.tasks:

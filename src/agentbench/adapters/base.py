@@ -1,7 +1,9 @@
 """Base classes and execution context for agent adapters."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from agentbench.models.event import AgentEvent, EventType, TokenUsage, ToolCallEvent
@@ -10,20 +12,23 @@ from agentbench.models.task import Task
 
 class AgentResponse(BaseModel):
     """Output returned by an agent after processing a task."""
+
     output: Any
-    tool_calls: List[ToolCallEvent] = Field(default_factory=list)
+    tool_calls: list[ToolCallEvent] = Field(default_factory=list)
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentExecutionContext:
     """Context provided to an agent during task execution to emit events and track actions."""
 
-    def __init__(self, task: Task, event_callback: Optional[Callable[[AgentEvent], None]] = None) -> None:
+    def __init__(
+        self, task: Task, event_callback: Callable[[AgentEvent], None] | None = None
+    ) -> None:
         self.task = task
         self.event_callback = event_callback
-        self.events: List[AgentEvent] = []
-        self.tool_calls: List[ToolCallEvent] = []
+        self.events: list[AgentEvent] = []
+        self.tool_calls: list[ToolCallEvent] = []
         self.token_usage = TokenUsage()
 
     def emit(self, event: AgentEvent) -> None:
@@ -32,7 +37,9 @@ class AgentExecutionContext:
         if self.event_callback:
             self.event_callback(event)
 
-    def record_thought(self, message: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def record_thought(
+        self, message: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Record an internal reasoning or plan step."""
         event = AgentEvent(
             event_type=EventType.THOUGHT,
@@ -44,11 +51,11 @@ class AgentExecutionContext:
     def record_tool_call(
         self,
         tool_name: str,
-        tool_input: Dict[str, Any],
-        tool_output: Optional[Any] = None,
+        tool_input: dict[str, Any],
+        tool_output: Any | None = None,
         duration_ms: float = 0.0,
         status: str = "success",
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> ToolCallEvent:
         """Record a completed tool call."""
         tool_event = ToolCallEvent(
@@ -94,7 +101,9 @@ class AgentExecutionContext:
 class BaseAgent(ABC):
     """Abstract interface for benchmarkable agent adapters."""
 
-    def __init__(self, name: Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self, name: str | None = None, config: dict[str, Any] | None = None
+    ) -> None:
         self.name = name or self.__class__.__name__
         self.config = config or {}
 

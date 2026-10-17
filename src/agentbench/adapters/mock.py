@@ -1,7 +1,8 @@
 """Mock agent adapter for deterministic testing and simulation."""
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.models.task import Task
 
@@ -22,12 +23,12 @@ class MockAgent(BaseAgent):
         self,
         name: str = "MockAgent",
         default_response: Any = "Mock response",
-        responses: Optional[Dict[str, Any]] = None,
-        tool_call_plans: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+        responses: dict[str, Any] | None = None,
+        tool_call_plans: dict[str, list[dict[str, Any]]] | None = None,
         delay_seconds: float = 0.0,
-        simulate_error: Optional[str] = None,
-        tokens_per_call: Optional[Dict[str, int]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        simulate_error: str | None = None,
+        tokens_per_call: dict[str, int] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name, config=config)
         self.default_response = default_response
@@ -35,7 +36,10 @@ class MockAgent(BaseAgent):
         self.tool_call_plans = tool_call_plans or {}
         self.delay_seconds = delay_seconds
         self.simulate_error = simulate_error
-        self.tokens_per_call = tokens_per_call or {"prompt_tokens": 100, "completion_tokens": 50}
+        self.tokens_per_call = tokens_per_call or {
+            "prompt_tokens": 100,
+            "completion_tokens": 50,
+        }
 
     async def run(self, task: Task, context: AgentExecutionContext) -> AgentResponse:
         context.record_thought(f"Starting mock execution for task {task.id}")

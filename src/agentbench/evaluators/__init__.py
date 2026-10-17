@@ -1,6 +1,7 @@
 """Evaluators module for AgentBench."""
 
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
+from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.deterministic import (
     ContainsEvaluator,
     ExactMatchEvaluator,
@@ -8,17 +9,16 @@ from agentbench.evaluators.deterministic import (
     NumericToleranceEvaluator,
     RegexEvaluator,
 )
-from agentbench.evaluators.tool_call import (
-    ToolArgumentEvaluator,
-    ToolCallCountEvaluator,
-    ToolCallSequenceEvaluator,
-)
-from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.registry import (
     build_evaluators_for_task,
     get_evaluator,
     list_evaluators,
     register_evaluator,
+)
+from agentbench.evaluators.tool_call import (
+    ToolArgumentEvaluator,
+    ToolCallCountEvaluator,
+    ToolCallSequenceEvaluator,
 )
 
 __all__ = [

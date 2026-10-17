@@ -1,55 +1,61 @@
 """Task and Benchmark Suite models."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
 class ToolParameter(BaseModel):
     """Specification of a tool input parameter."""
+
     type: str = "string"
     description: str = ""
     required: bool = False
-    default: Optional[Any] = None
+    default: Any | None = None
 
 
 class ToolDefinition(BaseModel):
     """Definition of a mock or live tool available to the agent during evaluation."""
+
     name: str
     description: str
-    parameters: Dict[str, ToolParameter] = Field(default_factory=dict)
-    mock_response: Optional[Any] = None
+    parameters: dict[str, ToolParameter] = Field(default_factory=dict)
+    mock_response: Any | None = None
 
 
 class EvaluatorConfig(BaseModel):
     """Configuration for a deterministic evaluator."""
+
     type: str  # e.g., "exact_match", "contains", "regex", "json_schema", "tool_call", "custom"
-    expected: Optional[Any] = None
-    options: Dict[str, Any] = Field(default_factory=dict)
+    expected: Any | None = None
+    options: dict[str, Any] = Field(default_factory=dict)
     weight: float = 1.0
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class Task(BaseModel):
     """A single benchmark task for an agent to perform."""
+
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     prompt: str
-    system_prompt: Optional[str] = None
-    tools: List[ToolDefinition] = Field(default_factory=list)
-    evaluators: List[EvaluatorConfig] = Field(default_factory=list)
-    expected_output: Optional[Any] = None
+    system_prompt: str | None = None
+    tools: list[ToolDefinition] = Field(default_factory=list)
+    evaluators: list[EvaluatorConfig] = Field(default_factory=list)
+    expected_output: Any | None = None
     timeout_seconds: float = 30.0
     max_retries: int = 1
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class TaskSuite(BaseModel):
     """A collection of tasks that form a benchmark suite."""
+
     name: str
     version: str = "1.0"
-    description: Optional[str] = None
-    tasks: List[Task] = Field(default_factory=list)
+    description: str | None = None
+    tasks: list[Task] = Field(default_factory=list)
     default_timeout_seconds: float = 30.0
     default_max_retries: int = 1
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)

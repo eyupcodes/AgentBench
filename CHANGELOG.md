@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ruff format --check` and `ruff check` steps in CI, with the existing findings fixed (#5).
+
 ### Fixed
 - `pytest-cov` is now part of the `dev` extra so `pytest --cov=agentbench` works as documented; CI enforces an 80% coverage gate (#3).
 

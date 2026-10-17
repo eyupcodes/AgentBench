@@ -2,9 +2,10 @@
 
 import json
 import os
-import urllib.request
 import urllib.error
-from typing import Any, Dict, List, Optional
+import urllib.request
+from typing import Any
+
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.models.task import Task
 
@@ -19,15 +20,17 @@ class GenericLLMAgent(BaseAgent):
         self,
         name: str = "GenericLLMAgent",
         model: str = "gpt-4o-mini",
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
         temperature: float = 0.0,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name, config=config)
         self.model = model
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
-        self.base_url = (base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")).rstrip("/")
+        self.base_url = (
+            base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        ).rstrip("/")
         self.temperature = temperature
 
     async def run(self, task: Task, context: AgentExecutionContext) -> AgentResponse:
@@ -51,23 +54,30 @@ class GenericLLMAgent(BaseAgent):
         if task.tools:
             tools_spec = []
             for tool in task.tools:
-                props = {k: {"type": v.type, "description": v.description} for k, v in tool.parameters.items()}
+                props = {
+                    k: {"type": v.type, "description": v.description}
+                    for k, v in tool.parameters.items()
+                }
                 required = [k for k, v in tool.parameters.items() if v.required]
-                tools_spec.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": {
-                            "type": "object",
-                            "properties": props,
-                            "required": required,
+                tools_spec.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": tool.name,
+                            "description": tool.description,
+                            "parameters": {
+                                "type": "object",
+                                "properties": props,
+                                "required": required,
+                            },
                         },
-                    },
-                })
+                    }
+                )
             payload["tools"] = tools_spec
 
-        context.record_thought(f"Sending request to {self.base_url}/chat/completions (model={self.model})")
+        context.record_thought(
+            f"Sending request to {self.base_url}/chat/completions (model={self.model})"
+        )
 
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
@@ -93,7 +103,9 @@ class GenericLLMAgent(BaseAgent):
         usage_info = resp_data.get("usage", {})
         prompt_tokens = usage_info.get("prompt_tokens", 0)
         completion_tokens = usage_info.get("completion_tokens", 0)
-        context.record_token_usage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens)
+        context.record_token_usage(
+            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens
+        )
 
         # Extract choice and tool calls
         choices = resp_data.get("choices", [])
@@ -115,7 +127,9 @@ class GenericLLMAgent(BaseAgent):
                 fn_args = {"raw": fn.get("arguments", "")}
 
             # If task tool had mock response, attach it
-            matched_mock = next((t.mock_response for t in task.tools if t.name == fn_name), None)
+            matched_mock = next(
+                (t.mock_response for t in task.tools if t.name == fn_name), None
+            )
             context.record_tool_call(
                 tool_name=fn_name,
                 tool_input=fn_args,

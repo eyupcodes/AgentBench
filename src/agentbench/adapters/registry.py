@@ -1,13 +1,13 @@
 """Registry for agent adapters."""
 
-from typing import Any, Dict, List, Type
+from typing import Any
+
 from agentbench.adapters.base import BaseAgent
+from agentbench.adapters.http_llm import GenericLLMAgent
 from agentbench.adapters.mock import MockAgent
 from agentbench.adapters.scripted import ScriptedAgent
-from agentbench.adapters.http_llm import GenericLLMAgent
 
-
-_ADAPTER_REGISTRY: Dict[str, Type[BaseAgent]] = {
+_ADAPTER_REGISTRY: dict[str, type[BaseAgent]] = {
     "mock": MockAgent,
     "mock_agent": MockAgent,
     "scripted": ScriptedAgent,
@@ -18,7 +18,7 @@ _ADAPTER_REGISTRY: Dict[str, Type[BaseAgent]] = {
 }
 
 
-def register_adapter(name: str, adapter_cls: Type[BaseAgent]) -> None:
+def register_adapter(name: str, adapter_cls: type[BaseAgent]) -> None:
     """Register a new adapter class under the given name."""
     _ADAPTER_REGISTRY[name.lower()] = adapter_cls
 
@@ -33,6 +33,7 @@ def get_adapter(name_or_alias: str, **kwargs: Any) -> BaseAgent:
     # Support dotted python import: "my_module.MyCustomAgent"
     if "." in name_or_alias:
         import importlib
+
         module_path, class_name = name_or_alias.rsplit(".", 1)
         module = importlib.import_module(module_path)
         cls = getattr(module, class_name)
@@ -41,9 +42,11 @@ def get_adapter(name_or_alias: str, **kwargs: Any) -> BaseAgent:
         return cls(**kwargs)
 
     available = ", ".join(list_adapters())
-    raise KeyError(f"Adapter '{name_or_alias}' not found. Available registered adapters: {available}")
+    raise KeyError(
+        f"Adapter '{name_or_alias}' not found. Available registered adapters: {available}"
+    )
 
 
-def list_adapters() -> List[str]:
+def list_adapters() -> list[str]:
     """List unique registered adapter names."""
     return sorted(list(set(_ADAPTER_REGISTRY.keys())))
