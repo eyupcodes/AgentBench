@@ -1,8 +1,10 @@
 """Integration tests for Typer CLI commands."""
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 from typer.testing import CliRunner
+
 from agentbench.cli import app
 from agentbench.loader import save_suite
 from agentbench.models.task import EvaluatorConfig, Task, TaskSuite

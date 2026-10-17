@@ -1,6 +1,7 @@
 """Example demonstrating how to use AgentBench programmatically in Python."""
 
 import asyncio
+
 from agentbench import (
     BenchmarkRunner,
     EvaluatorConfig,

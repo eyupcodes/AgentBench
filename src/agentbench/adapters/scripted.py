@@ -1,6 +1,8 @@
 """Scripted rule-based agent for deterministic scenario evaluations."""
 
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
+
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.models.task import Task
 
@@ -14,8 +16,8 @@ class ScriptedAgent(BaseAgent):
     def __init__(
         self,
         name: str = "ScriptedAgent",
-        handlers: Optional[Dict[str, Callable[[Task, AgentExecutionContext], Any]]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        handlers: dict[str, Callable[[Task, AgentExecutionContext], Any]] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name, config=config)
         self.handlers = handlers or {}

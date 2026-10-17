@@ -1,11 +1,12 @@
 """Benchmark report models for aggregated metrics and serialization."""
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
-from agentbench.models.result import RunStatus, TaskRunResult
 from agentbench.models.event import TokenUsage
+from agentbench.models.result import RunStatus, TaskRunResult
 
 
 class SuiteMetrics(BaseModel):
@@ -23,7 +24,7 @@ class SuiteMetrics(BaseModel):
     average_tool_calls_per_task: float = 0.0
     total_retries: int = 0
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
-    tool_usage_breakdown: Dict[str, int] = Field(default_factory=dict)
+    tool_usage_breakdown: dict[str, int] = Field(default_factory=dict)
 
 
 class BenchmarkReport(BaseModel):
@@ -33,17 +34,17 @@ class BenchmarkReport(BaseModel):
     agent_name: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metrics: SuiteMetrics = Field(default_factory=SuiteMetrics)
-    results: List[TaskRunResult] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    results: list[TaskRunResult] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def from_results(
         cls,
         suite_name: str,
         agent_name: str,
-        results: List[TaskRunResult],
+        results: list[TaskRunResult],
         suite_version: str = "1.0",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> "BenchmarkReport":
         """Compute aggregate metrics and construct a BenchmarkReport."""
         total = len(results)
@@ -62,7 +63,7 @@ class BenchmarkReport(BaseModel):
         total_retries = sum(r.retry_count for r in results)
 
         agg_tokens = TokenUsage()
-        tool_counts: Dict[str, int] = {}
+        tool_counts: dict[str, int] = {}
         for r in results:
             agg_tokens = agg_tokens.add(r.token_usage)
             for tc in r.tool_calls:

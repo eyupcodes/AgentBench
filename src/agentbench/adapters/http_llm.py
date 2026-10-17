@@ -2,9 +2,10 @@
 
 import json
 import os
-import urllib.request
 import urllib.error
-from typing import Any, Dict, List, Optional
+import urllib.request
+from typing import Any
+
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.models.task import Task
 
@@ -19,10 +20,10 @@ class GenericLLMAgent(BaseAgent):
         self,
         name: str = "GenericLLMAgent",
         model: str = "gpt-4o-mini",
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
         temperature: float = 0.0,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(name=name, config=config)
         self.model = model

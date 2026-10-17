@@ -2,24 +2,23 @@
 
 import io
 import json
-from pathlib import Path
 import tempfile
 import urllib.error
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from agentbench.adapters.base import AgentExecutionContext
 from agentbench.adapters.http_llm import GenericLLMAgent
 from agentbench.adapters.registry import get_adapter
-from agentbench.evaluators.custom import CustomEvaluator
-from agentbench.evaluators.deterministic import RegexEvaluator, NumericToleranceEvaluator
+from agentbench.evaluators.deterministic import (
+    NumericToleranceEvaluator,
+    RegexEvaluator,
+)
 from agentbench.evaluators.registry import get_evaluator
-from agentbench.evaluators.tool_call import ToolArgumentEvaluator, ToolCallCountEvaluator
-from agentbench.loader import load_suite, save_suite
-from agentbench.models.task import EvaluatorConfig, Task, TaskSuite
-from agentbench.models.result import RunStatus
-from agentbench.runner.context import RunnerOptions
-from agentbench.runner.runner import BenchmarkRunner
+from agentbench.loader import load_suite
+from agentbench.models.task import EvaluatorConfig, Task
 
 
 @pytest.mark.asyncio
@@ -112,7 +111,6 @@ def test_evaluator_error_cases():
     # Regex bad pattern
     bad_regex = RegexEvaluator(EvaluatorConfig(type="regex", options={"pattern": "[unclosed"}))
     task = Task(id="t1", name="T", prompt="p")
-    ctx = AgentExecutionContext(task=task)
     from agentbench.evaluators.base import EvaluationContext
     eval_ctx = EvaluationContext(task=task, output="test")
     res = bad_regex.evaluate(eval_ctx)

@@ -1,10 +1,11 @@
 """Unit tests for agent adapters and execution context."""
 
 import pytest
+
 from agentbench.adapters.base import AgentExecutionContext
 from agentbench.adapters.mock import MockAgent
+from agentbench.adapters.registry import get_adapter, list_adapters
 from agentbench.adapters.scripted import ScriptedAgent
-from agentbench.adapters.registry import get_adapter, list_adapters, register_adapter
 from agentbench.models.event import EventType
 from agentbench.models.task import Task
 

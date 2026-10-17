@@ -1,9 +1,15 @@
 """AgentBench core models."""
 
 from agentbench.models.event import AgentEvent, EventType, TokenUsage, ToolCallEvent
-from agentbench.models.task import EvaluatorConfig, Task, TaskSuite, ToolDefinition, ToolParameter
-from agentbench.models.result import EvaluationResult, RunStatus, TaskRunResult
 from agentbench.models.report import BenchmarkReport, SuiteMetrics
+from agentbench.models.result import EvaluationResult, RunStatus, TaskRunResult
+from agentbench.models.task import (
+    EvaluatorConfig,
+    Task,
+    TaskSuite,
+    ToolDefinition,
+    ToolParameter,
+)
 
 __all__ = [
     "AgentEvent",

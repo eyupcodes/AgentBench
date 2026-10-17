@@ -1,9 +1,15 @@
 """Unit tests for AgentBench data models."""
 
-from agentbench.models.event import AgentEvent, EventType, TokenUsage, ToolCallEvent
-from agentbench.models.task import EvaluatorConfig, Task, TaskSuite, ToolDefinition, ToolParameter
-from agentbench.models.result import EvaluationResult, RunStatus, TaskRunResult
-from agentbench.models.report import BenchmarkReport, SuiteMetrics
+from agentbench.models.event import TokenUsage, ToolCallEvent
+from agentbench.models.report import BenchmarkReport
+from agentbench.models.result import RunStatus, TaskRunResult
+from agentbench.models.task import (
+    EvaluatorConfig,
+    Task,
+    TaskSuite,
+    ToolDefinition,
+    ToolParameter,
+)
 
 
 def test_token_usage_aggregation():

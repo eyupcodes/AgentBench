@@ -1,10 +1,11 @@
 """Unit tests for reporting and serialization."""
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 from agentbench.models.report import BenchmarkReport
 from agentbench.models.result import RunStatus, TaskRunResult
-from agentbench.reporting.formatter import generate_markdown_report, print_cli_report
+from agentbench.reporting.formatter import generate_markdown_report
 from agentbench.reporting.json_report import load_report_json, save_report_json
 
 

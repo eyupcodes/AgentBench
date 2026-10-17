@@ -1,6 +1,6 @@
 """Terminal and Markdown formatters for benchmark results and metrics."""
 
-from typing import Optional
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -10,7 +10,7 @@ from agentbench.models.report import BenchmarkReport
 from agentbench.models.result import RunStatus
 
 
-def print_cli_report(report: BenchmarkReport, console: Optional[Console] = None, show_evals: bool = True) -> None:
+def print_cli_report(report: BenchmarkReport, console: Console | None = None, show_evals: bool = True) -> None:
     """Render a visually clear summary of the benchmark run using Rich."""
     console = console or Console()
 
@@ -18,22 +18,22 @@ def print_cli_report(report: BenchmarkReport, console: Optional[Console] = None,
     pass_color = "green" if report.metrics.pass_rate >= 80 else ("yellow" if report.metrics.pass_rate >= 50 else "red")
     
     summary_text = Text()
-    summary_text.append(f"Suite: ", style="bold")
+    summary_text.append("Suite: ", style="bold")
     summary_text.append(f"{report.suite_name} (v{report.suite_version})\n")
-    summary_text.append(f"Agent: ", style="bold")
+    summary_text.append("Agent: ", style="bold")
     summary_text.append(f"{report.agent_name}\n")
-    summary_text.append(f"Pass Rate: ", style="bold")
+    summary_text.append("Pass Rate: ", style="bold")
     summary_text.append(f"{report.metrics.pass_rate}% ", style=f"bold {pass_color}")
     summary_text.append(f"({report.metrics.passed_tasks}/{report.metrics.total_tasks} passed)\n")
-    summary_text.append(f"Avg Score: ", style="bold")
+    summary_text.append("Avg Score: ", style="bold")
     summary_text.append(f"{report.metrics.average_score * 100:.1f}%\n")
-    summary_text.append(f"Total Time: ", style="bold")
+    summary_text.append("Total Time: ", style="bold")
     summary_text.append(f"{report.metrics.total_execution_time_seconds:.2f}s (avg {report.metrics.average_execution_time_seconds:.2f}s/task)\n")
-    summary_text.append(f"Tool Calls: ", style="bold")
+    summary_text.append("Tool Calls: ", style="bold")
     summary_text.append(f"{report.metrics.total_tool_calls} total (avg {report.metrics.average_tool_calls_per_task:.1f}/task)\n")
-    summary_text.append(f"Retries: ", style="bold")
+    summary_text.append("Retries: ", style="bold")
     summary_text.append(f"{report.metrics.total_retries}\n")
-    summary_text.append(f"Tokens / Cost: ", style="bold")
+    summary_text.append("Tokens / Cost: ", style="bold")
     summary_text.append(
         f"{report.metrics.token_usage.total_tokens:,} tokens (${report.metrics.token_usage.estimated_cost_usd:.4f})"
     )

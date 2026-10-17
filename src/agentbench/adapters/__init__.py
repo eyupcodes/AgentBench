@@ -1,10 +1,10 @@
 """Agent adapters module."""
 
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
-from agentbench.adapters.mock import MockAgent
-from agentbench.adapters.scripted import ScriptedAgent
 from agentbench.adapters.http_llm import GenericLLMAgent
+from agentbench.adapters.mock import MockAgent
 from agentbench.adapters.registry import get_adapter, list_adapters, register_adapter
+from agentbench.adapters.scripted import ScriptedAgent
 
 __all__ = [
     "BaseAgent",

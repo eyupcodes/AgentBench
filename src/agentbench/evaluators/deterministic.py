@@ -2,10 +2,9 @@
 
 import json
 import re
-from typing import Any, Optional
+
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
-from agentbench.models.task import EvaluatorConfig
 
 
 class ExactMatchEvaluator(BaseEvaluator):

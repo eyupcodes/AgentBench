@@ -1,5 +1,7 @@
 """Unit tests for deterministic and tool-call evaluators."""
 
+from agentbench.evaluators.base import EvaluationContext
+from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.deterministic import (
     ContainsEvaluator,
     ExactMatchEvaluator,
@@ -12,8 +14,6 @@ from agentbench.evaluators.tool_call import (
     ToolCallCountEvaluator,
     ToolCallSequenceEvaluator,
 )
-from agentbench.evaluators.custom import CustomEvaluator
-from agentbench.evaluators.base import EvaluationContext
 from agentbench.models.event import ToolCallEvent
 from agentbench.models.task import EvaluatorConfig, Task
 

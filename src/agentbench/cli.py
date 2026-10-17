@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -11,7 +11,13 @@ from agentbench import __version__
 from agentbench.adapters.registry import get_adapter, list_adapters
 from agentbench.evaluators.registry import list_evaluators
 from agentbench.loader import load_suite, save_suite
-from agentbench.models.task import EvaluatorConfig, Task, TaskSuite, ToolDefinition, ToolParameter
+from agentbench.models.task import (
+    EvaluatorConfig,
+    Task,
+    TaskSuite,
+    ToolDefinition,
+    ToolParameter,
+)
 from agentbench.reporting.formatter import generate_markdown_report, print_cli_report
 from agentbench.reporting.json_report import load_report_json, save_report_json
 from agentbench.runner.context import RunnerOptions
@@ -29,11 +35,11 @@ console = Console()
 def run(
     suite: Path = typer.Option(..., "--suite", "-s", help="Path to benchmark suite file (YAML or JSON)."),
     agent: str = typer.Option("mock", "--agent", "-a", help="Agent adapter name or dotted python class path."),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="File path to save JSON report."),
-    export_md: Optional[Path] = typer.Option(None, "--export-md", help="File path to export Markdown summary."),
+    output: Path | None = typer.Option(None, "--output", "-o", help="File path to save JSON report."),
+    export_md: Path | None = typer.Option(None, "--export-md", help="File path to export Markdown summary."),
     concurrency: int = typer.Option(1, "--concurrency", "-c", help="Number of tasks to execute concurrently."),
-    timeout: Optional[float] = typer.Option(None, "--timeout", "-t", help="Override task timeout in seconds."),
-    retries: Optional[int] = typer.Option(None, "--retries", "-r", help="Override max retry attempts."),
+    timeout: float | None = typer.Option(None, "--timeout", "-t", help="Override task timeout in seconds."),
+    retries: int | None = typer.Option(None, "--retries", "-r", help="Override max retry attempts."),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show live execution event traces."),
 ) -> None:
     """Run a benchmark suite against an agent adapter."""
@@ -41,7 +47,7 @@ def run(
         task_suite = load_suite(suite)
     except Exception as e:
         console.print(f"[bold red]Failed to load suite:[/] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     if timeout is not None:
         for t in task_suite.tasks:
@@ -55,7 +61,7 @@ def run(
         agent_instance = get_adapter(agent)
     except Exception as e:
         console.print(f"[bold red]Failed to instantiate agent adapter '{agent}':[/] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     console.print(
         f"[bold blue]AgentBench[/] Running suite '[bold cyan]{task_suite.name}[/]' "
@@ -101,7 +107,7 @@ def validate(
     """Validate suite syntax, task schema, and evaluators without executing."""
     try:
         task_suite = load_suite(suite)
-        console.print(f"[bold green]Suite is valid![/]")
+        console.print("[bold green]Suite is valid![/]")
         console.print(f"  Name: [bold]{task_suite.name}[/]")
         console.print(f"  Version: {task_suite.version}")
         console.print(f"  Tasks: {len(task_suite.tasks)}")
@@ -110,7 +116,7 @@ def validate(
             console.print(f"    - [cyan]{t.id}[/]: {t.name} (Evaluators: {', '.join(eval_names)})")
     except Exception as e:
         console.print(f"[bold red]Validation error:[/] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command(name="list-adapters")
@@ -161,7 +167,7 @@ def report(
         rep = load_report_json(report_file)
     except Exception as e:
         console.print(f"[bold red]Failed to load report:[/] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
     if md:
         console.print(generate_markdown_report(rep))

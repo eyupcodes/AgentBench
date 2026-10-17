@@ -1,6 +1,5 @@
 """Evaluators for checking agent tool usage, call frequency, sequence, and arguments."""
 
-from typing import Any, Dict, List
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
 
@@ -47,7 +46,7 @@ class ToolCallSequenceEvaluator(BaseEvaluator):
     """Evaluates whether specific tools were invoked in an expected sequential order."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        expected_sequence: List[str] = self.config.options.get("sequence") or (
+        expected_sequence: list[str] = self.config.options.get("sequence") or (
             list(self.config.expected) if isinstance(self.config.expected, list) else []
         )
         actual_sequence = [tc.tool_name for tc in context.tool_calls]

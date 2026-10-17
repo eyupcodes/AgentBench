@@ -1,6 +1,8 @@
 """Custom Python function evaluator hook."""
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
+
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
 from agentbench.models.task import EvaluatorConfig
@@ -11,8 +13,8 @@ class CustomEvaluator(BaseEvaluator):
 
     def __init__(
         self,
-        config: Optional[EvaluatorConfig] = None,
-        fn: Optional[Callable[[EvaluationContext], Any]] = None,
+        config: EvaluatorConfig | None = None,
+        fn: Callable[[EvaluationContext], Any] | None = None,
     ) -> None:
         super().__init__(config=config)
         self.fn = fn

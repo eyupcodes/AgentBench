@@ -1,10 +1,6 @@
 """Configuration and options for the task benchmark runner."""
 
-from typing import Callable, Optional
-from pydantic import BaseModel, Field
-
-from agentbench.models.event import AgentEvent
-from agentbench.models.result import TaskRunResult
+from pydantic import BaseModel
 
 
 class RunnerOptions(BaseModel):
