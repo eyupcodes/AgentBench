@@ -1,6 +1,6 @@
 """AgentBench: Evaluation and Benchmarking Harness for AI Agents."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseAgent
 from agentbench.adapters.http_llm import GenericLLMAgent
