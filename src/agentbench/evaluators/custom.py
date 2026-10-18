@@ -1,11 +1,21 @@
 """Custom Python function evaluator hook."""
 
+import importlib
 from collections.abc import Callable
 from typing import Any
 
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
 from agentbench.models.task import EvaluatorConfig
+
+
+def _import_callable(path: str) -> Callable[[EvaluationContext], Any]:
+    """Resolve a dotted ``package.module.function`` path to a callable."""
+    module_path, fn_name = path.rsplit(".", 1)
+    fn = getattr(importlib.import_module(module_path), fn_name)
+    if not callable(fn):
+        raise TypeError(f"'{path}' is not callable")
+    return fn
 
 
 class CustomEvaluator(BaseEvaluator):
@@ -24,11 +34,15 @@ class CustomEvaluator(BaseEvaluator):
         if fn_to_call is None and self.config and "function" in self.config.options:
             fn_path = self.config.options["function"]
             if isinstance(fn_path, str) and "." in fn_path:
-                import importlib
-
-                module_path, fn_name = fn_path.rsplit(".", 1)
-                module = importlib.import_module(module_path)
-                fn_to_call = getattr(module, fn_name)
+                try:
+                    fn_to_call = _import_callable(fn_path)
+                except (ImportError, AttributeError, TypeError) as e:
+                    return EvaluationResult(
+                        evaluator_type="custom",
+                        passed=False,
+                        score=0.0,
+                        reason=f"Cannot load custom function '{fn_path}': {e}",
+                    )
 
         if fn_to_call is None:
             return EvaluationResult(
