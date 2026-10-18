@@ -145,3 +145,31 @@ def test_custom_evaluator():
     custom_eval = CustomEvaluator(fn=my_eval_fn)
     assert custom_eval.evaluate(_make_context("123456")).passed is True
     assert custom_eval.evaluate(_make_context("123")).passed is False
+
+
+def _custom_from_path(path):
+    return CustomEvaluator(EvaluatorConfig(type="custom", options={"function": path}))
+
+
+def test_custom_evaluator_import_path_resolves():
+    result = _custom_from_path("builtins.bool").evaluate(_make_context("x"))
+    assert result.passed is True
+
+
+def test_custom_evaluator_missing_module_fails_cleanly():
+    result = _custom_from_path("no_such_module_xyz.check").evaluate(_make_context("x"))
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "no_such_module_xyz.check" in result.reason
+
+
+def test_custom_evaluator_missing_attribute_fails_cleanly():
+    result = _custom_from_path("os.path.no_such_function").evaluate(_make_context("x"))
+    assert result.passed is False
+    assert "Cannot load custom function 'os.path.no_such_function'" in result.reason
+
+
+def test_custom_evaluator_non_callable_target_fails_cleanly():
+    result = _custom_from_path("os.sep").evaluate(_make_context("x"))
+    assert result.passed is False
+    assert "not callable" in result.reason

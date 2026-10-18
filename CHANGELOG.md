@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- A custom evaluator whose `function` path cannot be imported now yields a failed result naming the path, instead of raising (#10).
+- `BenchmarkRunner` records a failed evaluation when an evaluator cannot be built or raises, so one bad task no longer aborts the whole suite (#10).
+
 ## [0.1.1] - 2026-10-17
 
 ### Added
