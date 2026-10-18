@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `agentbench run` rejects `--concurrency` below 1, non-positive `--timeout` and negative `--retries` as usage errors, and reports an unwritable `--output` or `--export-md` path with a one-line error and exit code 1 instead of a traceback (#13).
 - A custom evaluator whose `function` path cannot be imported now yields a failed result naming the path, instead of raising (#10).
 - `BenchmarkRunner` records a failed evaluation when an evaluator cannot be built or raises, so one bad task no longer aborts the whole suite (#10).
 

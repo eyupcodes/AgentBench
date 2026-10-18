@@ -31,6 +31,12 @@ app = typer.Typer(
 console = Console()
 
 
+def _positive_timeout(value: float | None) -> float | None:
+    if value is not None and value <= 0:
+        raise typer.BadParameter("must be greater than 0")
+    return value
+
+
 @app.command()
 def run(
     suite: Path = typer.Option(
@@ -46,13 +52,21 @@ def run(
         None, "--export-md", help="File path to export Markdown summary."
     ),
     concurrency: int = typer.Option(
-        1, "--concurrency", "-c", help="Number of tasks to execute concurrently."
+        1,
+        "--concurrency",
+        "-c",
+        min=1,
+        help="Number of tasks to execute concurrently.",
     ),
     timeout: float | None = typer.Option(
-        None, "--timeout", "-t", help="Override task timeout in seconds."
+        None,
+        "--timeout",
+        "-t",
+        callback=_positive_timeout,
+        help="Override task timeout in seconds.",
     ),
     retries: int | None = typer.Option(
-        None, "--retries", "-r", help="Override max retry attempts."
+        None, "--retries", "-r", min=0, help="Override max retry attempts."
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show live execution event traces."
@@ -105,17 +119,21 @@ def run(
 
     print_cli_report(report, console=console)
 
-    if output:
-        out_path = save_report_json(report, output)
-        console.print(f"[bold green]Saved JSON report to:[/] {out_path}")
+    try:
+        if output:
+            out_path = save_report_json(report, output)
+            console.print(f"[bold green]Saved JSON report to:[/] {out_path}")
 
-    if export_md:
-        md_content = generate_markdown_report(report)
-        export_md_path = Path(export_md)
-        export_md_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(export_md_path, "w", encoding="utf-8") as f:
-            f.write(md_content)
-        console.print(f"[bold green]Saved Markdown summary to:[/] {export_md_path}")
+        if export_md:
+            md_content = generate_markdown_report(report)
+            export_md_path = Path(export_md)
+            export_md_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(export_md_path, "w", encoding="utf-8") as f:
+                f.write(md_content)
+            console.print(f"[bold green]Saved Markdown summary to:[/] {export_md_path}")
+    except OSError as e:
+        console.print(f"[bold red]Failed to write report:[/] {e}")
+        raise typer.Exit(code=1) from e
 
     if report.metrics.pass_rate < 100.0 and report.metrics.failed_tasks > 0:
         # Exit with non-zero if tasks failed

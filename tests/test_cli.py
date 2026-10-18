@@ -3,6 +3,7 @@
 import tempfile
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from agentbench.cli import app
@@ -83,3 +84,68 @@ def test_cli_run_suite():
         res_report = runner.invoke(app, ["report", str(out_json)])
         assert res_report.exit_code == 0
         assert "AgentBench Execution Summary" in res_report.stdout
+
+
+def _write_suite(directory: Path) -> Path:
+    suite = TaskSuite(
+        name="Option Suite",
+        tasks=[
+            Task(
+                id="t1",
+                name="Task 1",
+                prompt="echo: Hello",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="Hello")],
+            )
+        ],
+    )
+    path = directory / "suite.yaml"
+    save_suite(suite, path)
+    return path
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        ["--concurrency", "0"],
+        ["--concurrency", "-2"],
+        ["--timeout", "0"],
+        ["--timeout", "-5"],
+        ["--retries", "-1"],
+    ],
+)
+def test_cli_run_rejects_invalid_numeric_options(tmp_path, option):
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(
+        app, ["run", "--suite", str(suite_path), "--agent", "scripted", *option]
+    )
+
+    assert result.exit_code == 2
+    assert "Running suite" not in result.output
+
+
+def test_cli_run_accepts_zero_retries(tmp_path):
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", "--retries", "0"],
+    )
+
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("flag", ["--output", "--export-md"])
+def test_cli_run_reports_unwritable_output(tmp_path, flag):
+    suite_path = _write_suite(tmp_path)
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", flag, str(blocker / "r.out")],
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to write report" in result.output
+    assert not isinstance(result.exception, OSError)
