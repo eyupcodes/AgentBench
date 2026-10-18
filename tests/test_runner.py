@@ -3,6 +3,8 @@
 import pytest
 
 from agentbench.adapters.mock import MockAgent
+from agentbench.evaluators.base import BaseEvaluator
+from agentbench.evaluators.registry import register_evaluator
 from agentbench.models.result import RunStatus
 from agentbench.models.task import EvaluatorConfig, Task, TaskSuite
 from agentbench.runner.context import RunnerOptions
@@ -100,3 +102,60 @@ async def test_runner_suite_execution():
     assert report.metrics.failed_tasks == 1
     assert report.metrics.pass_rate == 50.0
     assert len(report.results) == 2
+
+
+class _RaisingEvaluator(BaseEvaluator):
+    def evaluate(self, context):
+        raise RuntimeError("boom")
+
+
+@pytest.mark.asyncio
+async def test_runner_survives_raising_evaluator():
+    register_evaluator("raising_test", _RaisingEvaluator)
+    suite = TaskSuite(
+        name="Resilience",
+        tasks=[
+            Task(
+                id="bad",
+                name="Bad",
+                prompt="p",
+                evaluators=[EvaluatorConfig(type="raising_test")],
+            ),
+            Task(
+                id="good",
+                name="Good",
+                prompt="p",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="ok")],
+            ),
+        ],
+    )
+    report = await BenchmarkRunner().run_suite(
+        suite, MockAgent(responses={"bad": "x", "good": "ok"})
+    )
+
+    by_id = {r.task_id: r for r in report.results}
+    assert by_id["bad"].passed is False
+    assert by_id["bad"].status == RunStatus.FAILURE
+    assert "RuntimeError: boom" in by_id["bad"].evaluations[0].reason
+    assert by_id["good"].passed is True
+
+
+@pytest.mark.asyncio
+async def test_runner_reports_unknown_evaluator_type_as_failure():
+    suite = TaskSuite(
+        name="Typo",
+        tasks=[
+            Task(
+                id="t",
+                name="T",
+                prompt="p",
+                evaluators=[EvaluatorConfig(type="exact_mtach", expected="ok")],
+            )
+        ],
+    )
+    report = await BenchmarkRunner().run_suite(suite, MockAgent(responses={"t": "ok"}))
+
+    result = report.results[0]
+    assert result.passed is False
+    assert result.evaluations[0].evaluator_type == "setup"
+    assert "exact_mtach" in result.evaluations[0].reason

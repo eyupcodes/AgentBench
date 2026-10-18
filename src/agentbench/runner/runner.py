@@ -141,10 +141,29 @@ class BenchmarkRunner:
                 retry_count=retry_count,
             )
 
-            evaluators = build_evaluators_for_task(task)
-            if evaluators:
+            try:
+                evaluators = build_evaluators_for_task(task)
+            except Exception as e:
+                evaluators = []
+                evaluations.append(
+                    EvaluationResult(
+                        evaluator_type="setup",
+                        passed=False,
+                        score=0.0,
+                        reason=f"Cannot build evaluators: {type(e).__name__}: {e}",
+                    )
+                )
+            if evaluators or evaluations:
                 for evaluator in evaluators:
-                    res = evaluator.evaluate(eval_ctx)
+                    try:
+                        res = evaluator.evaluate(eval_ctx)
+                    except Exception as e:
+                        res = EvaluationResult(
+                            evaluator_type=evaluator.config.type,
+                            passed=False,
+                            score=0.0,
+                            reason=f"Evaluator raised {type(e).__name__}: {e}",
+                        )
                     evaluations.append(res)
 
                 overall_passed = all(ev.passed for ev in evaluations)
