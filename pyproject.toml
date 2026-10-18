@@ -50,6 +50,12 @@ dev = [
 [project.scripts]
 agentbench = "agentbench.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/eyupcodes/AgentBench"
+Repository = "https://github.com/eyupcodes/AgentBench"
+Issues = "https://github.com/eyupcodes/AgentBench/issues"
+Changelog = "https://github.com/eyupcodes/AgentBench/blob/main/CHANGELOG.md"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
