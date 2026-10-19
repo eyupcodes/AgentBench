@@ -173,3 +173,106 @@ def test_custom_evaluator_non_callable_target_fails_cleanly():
     result = _custom_from_path("os.sep").evaluate(_make_context("x"))
     assert result.passed is False
     assert "not callable" in result.reason
+
+
+_TOOLS = [
+    ToolCallEvent(tool_name="search", tool_input={"query": "weather"}),
+    ToolCallEvent(tool_name="calculator", tool_input={"expr": "10+5"}),
+]
+
+
+def test_tool_call_count_reports_each_violated_bound():
+    config = EvaluatorConfig(
+        type="tool_call_count", options={"min_calls": 3, "max_calls": 1}
+    )
+    res = ToolCallCountEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.score == 0.0
+    assert "at least 3" in res.reason
+    assert "at most 1" in res.reason
+
+
+def test_tool_call_count_filters_by_tool_name():
+    config = EvaluatorConfig(
+        type="tool_call_count", options={"tool_name": "search", "exact_calls": 2}
+    )
+    res = ToolCallCountEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.actual == {"count": 1, "target": "tool 'search'"}
+    assert "exactly 2" in res.reason
+
+
+def test_tool_call_sequence_out_of_order_fails():
+    config = EvaluatorConfig(
+        type="tool_call_sequence", options={"sequence": ["calculator", "search"]}
+    )
+    res = ToolCallSequenceEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.actual == ["search", "calculator"]
+
+
+def test_tool_call_sequence_strict_requires_exact_match():
+    config = EvaluatorConfig(
+        type="tool_call_sequence", options={"sequence": ["search"], "strict": True}
+    )
+    res = ToolCallSequenceEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "Expected sequence" in res.reason
+
+
+def test_tool_argument_mismatch_lists_actual_inputs():
+    config = EvaluatorConfig(
+        type="tool_argument",
+        options={"tool_name": "search", "expected_args": {"query": "news"}},
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.actual == [{"query": "weather"}]
+
+
+def test_tool_argument_without_tool_name_matches_any_call():
+    config = EvaluatorConfig(
+        type="tool_argument", options={"expected_args": {"expr": "10+5"}}
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is True
+
+
+def test_tool_call_count_without_bounds_fails():
+    config = EvaluatorConfig(type="tool_call_count", options={"tool_name": "search"})
+    res = ToolCallCountEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "min_calls" in res.reason
+
+
+def test_tool_call_sequence_without_sequence_fails():
+    config = EvaluatorConfig(type="tool_call_sequence")
+    res = ToolCallSequenceEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "sequence" in res.reason
+
+
+def test_tool_argument_with_no_calls_does_not_name_none():
+    config = EvaluatorConfig(
+        type="tool_argument", options={"expected_args": {"query": "x"}}
+    )
+    res = ToolArgumentEvaluator(config).evaluate(_make_context("done"))
+    assert res.passed is False
+    assert "None" not in res.reason
+    assert "No tool calls" in res.reason
