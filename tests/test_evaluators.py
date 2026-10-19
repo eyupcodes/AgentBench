@@ -248,3 +248,31 @@ def test_tool_argument_without_tool_name_matches_any_call():
         _make_context("done", tool_calls=_TOOLS)
     )
     assert res.passed is True
+
+
+def test_tool_call_count_without_bounds_fails():
+    config = EvaluatorConfig(type="tool_call_count", options={"tool_name": "search"})
+    res = ToolCallCountEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "min_calls" in res.reason
+
+
+def test_tool_call_sequence_without_sequence_fails():
+    config = EvaluatorConfig(type="tool_call_sequence")
+    res = ToolCallSequenceEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "sequence" in res.reason
+
+
+def test_tool_argument_with_no_calls_does_not_name_none():
+    config = EvaluatorConfig(
+        type="tool_argument", options={"expected_args": {"query": "x"}}
+    )
+    res = ToolArgumentEvaluator(config).evaluate(_make_context("done"))
+    assert res.passed is False
+    assert "None" not in res.reason
+    assert "No tool calls" in res.reason

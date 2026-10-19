@@ -20,6 +20,16 @@ class ToolCallCountEvaluator(BaseEvaluator):
         else:
             actual_count = len(context.tool_calls)
 
+        if min_calls is None and max_calls is None and exact_calls is None:
+            return EvaluationResult(
+                evaluator_type="tool_call_count",
+                passed=False,
+                score=0.0,
+                expected=self.config.options,
+                actual={"count": actual_count},
+                reason="No bound configured: set min_calls, max_calls or exact_calls",
+            )
+
         passed = True
         reasons = []
 
@@ -53,6 +63,16 @@ class ToolCallSequenceEvaluator(BaseEvaluator):
         )
         actual_sequence = [tc.tool_name for tc in context.tool_calls]
         strict = self.config.options.get("strict", False)
+
+        if not expected_sequence:
+            return EvaluationResult(
+                evaluator_type="tool_call_sequence",
+                passed=False,
+                score=0.0,
+                expected=expected_sequence,
+                actual=actual_sequence,
+                reason="No expected sequence configured: set options.sequence",
+            )
 
         if strict:
             passed = actual_sequence == expected_sequence
@@ -95,6 +115,15 @@ class ToolArgumentEvaluator(BaseEvaluator):
         )
 
         if not matching_calls:
+            if not tool_name:
+                return EvaluationResult(
+                    evaluator_type="tool_argument",
+                    passed=False,
+                    score=0.0,
+                    expected={"args": expected_args},
+                    actual=None,
+                    reason="No tool calls were made",
+                )
             return EvaluationResult(
                 evaluator_type="tool_argument",
                 passed=False,
