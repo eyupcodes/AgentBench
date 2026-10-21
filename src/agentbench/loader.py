@@ -22,11 +22,11 @@ def load_suite(file_path: str | Path) -> TaskSuite:
     elif path.suffix.lower() == ".json":
         raw_data = json.loads(content)
     else:
-        # Attempt yaml first, fallback to json
+        # Parse JSON first to preserve its Unicode escape semantics.
         try:
-            raw_data = yaml.safe_load(content)
-        except Exception:
             raw_data = json.loads(content)
+        except json.JSONDecodeError:
+            raw_data = yaml.safe_load(content)
 
     if not isinstance(raw_data, dict):
         raise ValueError(
