@@ -1,5 +1,7 @@
 """Unit tests for agent adapters and execution context."""
 
+import asyncio
+
 import pytest
 
 from agentbench.adapters.base import AgentExecutionContext
@@ -70,6 +72,78 @@ async def test_scripted_agent():
     agent.register_handler("t_custom", lambda t, c: "Dynamic Handled")
     resp2 = await agent.run(task, context)
     assert resp2.output == "Dynamic Handled"
+
+
+@pytest.mark.asyncio
+async def test_scripted_agent_async_handler_preserves_context():
+    task = Task(id="t_async", name="Async Script Task", prompt="echo: ignored")
+    context = AgentExecutionContext(task=task)
+
+    async def handler(received_task, received_context):
+        await asyncio.sleep(0)
+        assert received_task is task
+        assert received_context is context
+        received_context.record_tool_call(
+            tool_name="lookup",
+            tool_input={"city": "İstanbul"},
+            tool_output={"temperature": 20},
+        )
+        received_context.record_token_usage(prompt_tokens=3, completion_tokens=2)
+        return {"temperature": 20}
+
+    agent = ScriptedAgent(handlers={task.id: handler})
+    resp = await agent.run(task, context)
+
+    assert resp.output == {"temperature": 20}
+    assert len(resp.tool_calls) == 1
+    assert resp.tool_calls == context.tool_calls
+    assert resp.tool_calls is not context.tool_calls
+    assert resp.tool_calls[0].tool_name == "lookup"
+    assert resp.tool_calls[0].tool_input == {"city": "İstanbul"}
+    assert resp.tool_calls[0].tool_output == {"temperature": 20}
+    assert resp.token_usage.prompt_tokens == 3
+    assert resp.token_usage.completion_tokens == 2
+    assert resp.token_usage.total_tokens == 5
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("prompt", "expected"),
+    [
+        ('  JsOn: {"message": "İstanbul 🧪"}  ', {"message": "İstanbul 🧪"}),
+        ("json: [1, false, null]", [1, False, None]),
+        ('  JSON: {"unfinished":  ', '{"unfinished":'),
+    ],
+    ids=["unicode-object", "array", "invalid-json-fallback"],
+)
+async def test_scripted_agent_json_heuristic(prompt, expected):
+    task = Task(id="t_json", name="JSON Script Task", prompt=prompt)
+    context = AgentExecutionContext(task=task)
+
+    resp = await ScriptedAgent().run(task, context)
+
+    assert resp.output == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("expected_output", "expected"),
+    [(0, 0), (False, False), ("", ""), ([], []), ({}, {}), (None, "OK")],
+    ids=["zero", "false", "empty-string", "empty-list", "empty-dict", "unset"],
+)
+async def test_scripted_agent_default_preserves_falsy_output(expected_output, expected):
+    task = Task(
+        id="t_default",
+        name="Default Script Task",
+        prompt="No scripted heuristic",
+        expected_output=expected_output,
+    )
+    context = AgentExecutionContext(task=task)
+
+    resp = await ScriptedAgent().run(task, context)
+
+    assert resp.output == expected
+    assert type(resp.output) is type(expected)
 
 
 def test_adapter_registry():

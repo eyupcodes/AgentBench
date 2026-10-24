@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Regression tests for `ScriptedAgent` cover awaited handlers with tool/token accounting, JSON parsing and malformed-input fallback, and preservation of falsy expected outputs.
+
 ### Fixed
 - JSON suites with missing or unrecognized extensions now preserve escaped Unicode characters outside the BMP (such as emoji); regression tests also cover YAML/JSON round trips and invalid input validation.
 - `tool_call_count` without `min_calls`/`max_calls`/`exact_calls` and `tool_call_sequence` without a `sequence` now fail with a reason naming the missing option instead of passing for any trace; `tool_argument` no longer reports tool `'None'` when no tool was called (#15).
