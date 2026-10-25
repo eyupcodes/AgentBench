@@ -1,5 +1,7 @@
 """Unit tests for deterministic and tool-call evaluators."""
 
+import pytest
+
 from agentbench.evaluators.base import EvaluationContext
 from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.deterministic import (
@@ -15,6 +17,7 @@ from agentbench.evaluators.tool_call import (
     ToolCallSequenceEvaluator,
 )
 from agentbench.models.event import ToolCallEvent
+from agentbench.models.result import EvaluationResult
 from agentbench.models.task import EvaluatorConfig, Task
 
 
@@ -145,6 +148,65 @@ def test_custom_evaluator():
     custom_eval = CustomEvaluator(fn=my_eval_fn)
     assert custom_eval.evaluate(_make_context("123456")).passed is True
     assert custom_eval.evaluate(_make_context("123")).passed is False
+
+
+@pytest.mark.parametrize(
+    ("returned_score", "passed", "score"),
+    [
+        (-1, False, 0.0),
+        (0, False, 0.0),
+        (0.75, False, 0.75),
+        (1, True, 1.0),
+        (2.5, True, 1.0),
+    ],
+)
+def test_custom_evaluator_clamps_scores_without_passing_partial_credit(
+    returned_score, passed, score
+):
+    evaluator = CustomEvaluator(fn=lambda ctx: returned_score)
+
+    result = evaluator.evaluate(_make_context("answer"))
+
+    assert result.passed is passed
+    assert result.score == score
+    assert result.actual == "answer"
+
+
+def test_custom_evaluator_preserves_structured_verdict():
+    def evaluate_answer(ctx):
+        return EvaluationResult(
+            evaluator_type="domain_check",
+            passed=False,
+            score=0.25,
+            expected="complete answer",
+            actual=ctx.output,
+            reason="Missing supporting evidence",
+            metadata={"missing_fields": ["evidence"]},
+        )
+
+    result = CustomEvaluator(fn=evaluate_answer).evaluate(_make_context("answer"))
+
+    assert result.model_dump() == {
+        "evaluator_type": "domain_check",
+        "passed": False,
+        "score": 0.25,
+        "expected": "complete answer",
+        "actual": "answer",
+        "reason": "Missing supporting evidence",
+        "metadata": {"missing_fields": ["evidence"]},
+    }
+
+
+def test_custom_evaluator_converts_handler_exception_to_failed_result():
+    def broken_evaluator(ctx):
+        raise ValueError("Invalid answer format")
+
+    result = CustomEvaluator(fn=broken_evaluator).evaluate(_make_context("answer"))
+
+    assert result.evaluator_type == "custom"
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "Invalid answer format" in result.reason
 
 
 def _custom_from_path(path):
