@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Report regression tests cover mixed success, failure, timeout, and error metrics, resource totals, and JSON round trips for mixed and empty suites.
 - Regression tests for `ScriptedAgent` cover awaited handlers with tool/token accounting, JSON parsing and malformed-input fallback, and preservation of falsy expected outputs.
 
 ### Fixed
