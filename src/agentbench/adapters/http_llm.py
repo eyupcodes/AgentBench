@@ -100,31 +100,35 @@ class GenericLLMAgent(BaseAgent):
             raise RuntimeError(f"Failed to query LLM endpoint: {e}") from e
 
         # Extract usage
-        usage_info = resp_data.get("usage", {})
-        prompt_tokens = usage_info.get("prompt_tokens", 0)
-        completion_tokens = usage_info.get("completion_tokens", 0)
+        # Servers may send explicit nulls, so `or` rather than `get` defaults.
+        usage_info = resp_data.get("usage") or {}
+        prompt_tokens = usage_info.get("prompt_tokens") or 0
+        completion_tokens = usage_info.get("completion_tokens") or 0
         context.record_token_usage(
             prompt_tokens=prompt_tokens, completion_tokens=completion_tokens
         )
 
         # Extract choice and tool calls
-        choices = resp_data.get("choices", [])
+        choices = resp_data.get("choices") or []
         if not choices:
             return AgentResponse(output="", token_usage=context.token_usage)
 
-        choice_msg = choices[0].get("message", {})
-        content = choice_msg.get("content", "")
+        choice_msg = choices[0].get("message") or {}
+        content = choice_msg.get("content") or ""
 
         # Check for tool calls returned by LLM
-        tool_calls_raw = choice_msg.get("tool_calls", [])
+        tool_calls_raw = choice_msg.get("tool_calls") or []
         for raw_tc in tool_calls_raw:
-            fn = raw_tc.get("function", {})
-            fn_name = fn.get("name", "")
-            fn_args = {}
+            fn = raw_tc.get("function") or {}
+            fn_name = fn.get("name") or ""
+            raw_args = fn.get("arguments") or "{}"
             try:
-                fn_args = json.loads(fn.get("arguments", "{}"))
+                fn_args = json.loads(raw_args)
             except Exception:
-                fn_args = {"raw": fn.get("arguments", "")}
+                fn_args = None
+            if not isinstance(fn_args, dict):
+                # Tool input must be an object; keep what the model sent.
+                fn_args = {"raw": raw_args}
 
             # If task tool had mock response, attach it
             matched_mock = next(

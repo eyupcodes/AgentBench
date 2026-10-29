@@ -146,3 +146,74 @@ def test_evaluator_registry_dotted_import():
 
     with pytest.raises(KeyError, match="Unknown evaluator type"):
         get_evaluator(EvaluatorConfig(type="non_existent_evaluator_xyz"))
+
+
+async def _run_http_llm(reply):
+    mock_urlopen = MagicMock()
+    mock_urlopen.__enter__.return_value = io.BytesIO(json.dumps(reply).encode("utf-8"))
+    with patch("urllib.request.urlopen", return_value=mock_urlopen):
+        agent = GenericLLMAgent(api_key="test-key")
+        task = Task(id="t1", name="Task 1", prompt="Hello")
+        context = AgentExecutionContext(task=task)
+        return await agent.run(task, context)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "reply",
+    [
+        {"choices": [{"message": {"content": "hi", "tool_calls": None}}]},
+        {"choices": [{"message": {"content": "hi"}}], "usage": None},
+        {"choices": [{"message": None}]},
+        {"choices": None},
+        {
+            "choices": [{"message": {"content": "hi"}}],
+            "usage": {"prompt_tokens": None, "completion_tokens": None},
+        },
+    ],
+)
+async def test_http_llm_tolerates_null_fields(reply):
+    resp = await _run_http_llm(reply)
+
+    assert resp.token_usage.total_tokens == 0
+    assert resp.tool_calls == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("arguments", ["[1, 2]", "42", "not json"])
+async def test_http_llm_keeps_non_object_tool_arguments_raw(arguments):
+    reply = {
+        "choices": [
+            {
+                "message": {
+                    "content": None,
+                    "tool_calls": [
+                        {"function": {"name": "lookup", "arguments": arguments}}
+                    ],
+                }
+            }
+        ]
+    }
+
+    resp = await _run_http_llm(reply)
+
+    assert resp.output == {"tool_calls": 1}
+    assert resp.tool_calls[0].tool_name == "lookup"
+    assert resp.tool_calls[0].tool_input == {"raw": arguments}
+
+
+@pytest.mark.asyncio
+async def test_http_llm_missing_tool_arguments_default_to_empty_object():
+    reply = {
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [{"function": {"name": "ping", "arguments": None}}]
+                }
+            }
+        ]
+    }
+
+    resp = await _run_http_llm(reply)
+
+    assert resp.tool_calls[0].tool_input == {}
