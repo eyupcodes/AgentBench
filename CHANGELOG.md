@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- `GenericLLMAgent` no longer crashes on `null` `usage`, token counts, `message` or `tool_calls` in a reply, and keeps tool arguments that are not a JSON object under `raw` (#21).
-
 ### Added
 - Custom evaluator regression tests cover partial credit, score clamping, structured verdict preservation, and handler exceptions reported as failed evaluations.
 - Report regression tests cover mixed success, failure, timeout, and error metrics, resource totals, and JSON round trips for mixed and empty suites.
 - Regression tests for `ScriptedAgent` cover awaited handlers with tool/token accounting, JSON parsing and malformed-input fallback, and preservation of falsy expected outputs.
 
 ### Fixed
+- `GenericLLMAgent` no longer crashes on `null` `usage`, token counts, `message` or `tool_calls` in a reply, and keeps tool arguments that are not a JSON object under `raw` (#21).
 - JSON suites with missing or unrecognized extensions now preserve escaped Unicode characters outside the BMP (such as emoji); regression tests also cover YAML/JSON round trips and invalid input validation.
 - `tool_call_count` without `min_calls`/`max_calls`/`exact_calls` and `tool_call_sequence` without a `sequence` now fail with a reason naming the missing option instead of passing for any trace; `tool_argument` no longer reports tool `'None'` when no tool was called (#15).
 - `agentbench run` rejects `--concurrency` below 1, non-positive `--timeout` and negative `--retries` as usage errors, and reports an unwritable `--output` or `--export-md` path with a one-line error and exit code 1 instead of a traceback (#13).
