@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `GenericLLMAgent` no longer crashes on `null` `usage`, token counts, `message` or `tool_calls` in a reply, and keeps tool arguments that are not a JSON object under `raw` (#21).
+
 ### Added
 - Custom evaluator regression tests cover partial credit, score clamping, structured verdict preservation, and handler exceptions reported as failed evaluations.
 - Report regression tests cover mixed success, failure, timeout, and error metrics, resource totals, and JSON round trips for mixed and empty suites.
