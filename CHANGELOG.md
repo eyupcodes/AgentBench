@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Suite files and report JSON with a UTF-8 BOM (Excel, Windows editors) now load instead of failing to parse (#23).
+
 ### Added
 - Custom evaluator regression tests cover partial credit, score clamping, structured verdict preservation, and handler exceptions reported as failed evaluations.
 - Report regression tests cover mixed success, failure, timeout, and error metrics, resource totals, and JSON round trips for mixed and empty suites.

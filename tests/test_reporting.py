@@ -112,6 +112,14 @@ def test_mixed_results_metrics_survive_json_round_trip(tmp_path):
     assert load_report_json(path) == report
 
 
+def test_load_report_json_accepts_utf8_bom(tmp_path):
+    report = BenchmarkReport.from_results("S", "Agent", [])
+    path = tmp_path / "report.json"
+    path.write_bytes(b"\xef\xbb\xbf" + report.model_dump_json().encode("utf-8"))
+
+    assert load_report_json(path) == report
+
+
 def test_empty_report_json_round_trip(tmp_path):
     report = BenchmarkReport.from_results("EmptySuite", "TestAgent", [])
     metrics = report.metrics
