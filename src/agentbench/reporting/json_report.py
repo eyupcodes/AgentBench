@@ -20,6 +20,6 @@ def save_report_json(
 def load_report_json(file_path: str | Path) -> BenchmarkReport:
     """Deserialize a BenchmarkReport from a JSON file."""
     path = Path(file_path)
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8-sig") as f:
         data = json.load(f)
     return BenchmarkReport.model_validate(data)
