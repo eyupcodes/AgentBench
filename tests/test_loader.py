@@ -71,6 +71,17 @@ def test_load_suite_supported_formats(tmp_path, suite_data, filename, serialize)
     assert load_suite(str(path)) == TaskSuite.model_validate(suite_data)
 
 
+@pytest.mark.parametrize(
+    ("filename", "serialize"),
+    [("suite.yaml", yaml.safe_dump), ("suite.json", json.dumps), ("suite", json.dumps)],
+)
+def test_load_suite_accepts_utf8_bom(tmp_path, suite_data, filename, serialize):
+    path = tmp_path / filename
+    path.write_bytes(b"\xef\xbb\xbf" + serialize(suite_data).encode("utf-8"))
+
+    assert load_suite(path) == TaskSuite.model_validate(suite_data)
+
+
 @pytest.mark.parametrize("suffix", [".yaml", ".yml", ".YAML", ".json", ".JSON", ""])
 def test_save_suite_round_trip(tmp_path, suite_data, suffix):
     suite = TaskSuite.model_validate(suite_data)

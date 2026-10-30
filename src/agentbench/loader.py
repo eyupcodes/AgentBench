@@ -14,7 +14,8 @@ def load_suite(file_path: str | Path) -> TaskSuite:
     if not path.exists():
         raise FileNotFoundError(f"Suite file not found: {file_path}")
 
-    with open(path, encoding="utf-8") as f:
+    # utf-8-sig drops the BOM that Excel and Windows editors prepend.
+    with open(path, encoding="utf-8-sig") as f:
         content = f.read()
 
     if path.suffix.lower() in [".yaml", ".yml"]:
