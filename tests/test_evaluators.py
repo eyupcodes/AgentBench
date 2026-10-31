@@ -338,3 +338,33 @@ def test_tool_argument_with_no_calls_does_not_name_none():
     assert res.passed is False
     assert "None" not in res.reason
     assert "No tool calls" in res.reason
+
+
+@pytest.mark.parametrize("expected", [None, [], "", [""], [None]])
+def test_contains_fails_without_expected_substrings(expected):
+    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected=expected))
+
+    result = evaluator.evaluate(_make_context("None of it, but some output"))
+
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "No expected substrings" in result.reason
+
+
+def test_contains_uses_task_expected_output_when_config_is_empty():
+    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains"))
+
+    result = evaluator.evaluate(_make_context("the answer is 42", expected="42"))
+
+    assert result.passed is True
+
+
+@pytest.mark.parametrize("options", [{}, {"pattern": ""}])
+def test_regex_fails_without_pattern(options):
+    evaluator = RegexEvaluator(EvaluatorConfig(type="regex", options=options))
+
+    result = evaluator.evaluate(_make_context("any output at all"))
+
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "No pattern specified" in result.reason
