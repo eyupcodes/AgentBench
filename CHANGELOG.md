@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `contains` and `regex` evaluators now fail with a clear reason when no expected substrings or pattern are configured, instead of passing every output (`contains` also no longer searched for the text "none") (#25).
 - Suite files and report JSON with a UTF-8 BOM (Excel, Windows editors) now load instead of failing to parse (#23).
 
 ### Added

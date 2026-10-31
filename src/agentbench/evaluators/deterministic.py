@@ -72,7 +72,9 @@ class ContainsEvaluator(BaseEvaluator):
 
         # Expected can be a single string or a list of required substrings
         targets = (
-            [expected]
+            []
+            if expected is None
+            else [expected]
             if isinstance(expected, str)
             else (
                 list(expected)
@@ -80,6 +82,16 @@ class ContainsEvaluator(BaseEvaluator):
                 else [str(expected)]
             )
         )
+        targets = [t for t in targets if t is not None and str(t) != ""]
+        if not targets:
+            return EvaluationResult(
+                evaluator_type="contains",
+                passed=False,
+                score=0.0,
+                expected=expected,
+                actual=context.output,
+                reason="No expected substrings specified for contains",
+            )
         missing = []
 
         for target in targets:
@@ -116,6 +128,16 @@ class RegexEvaluator(BaseEvaluator):
             self.config.expected or ""
         )
         actual = str(context.output or "")
+
+        if not pattern_str:
+            return EvaluationResult(
+                evaluator_type="regex",
+                passed=False,
+                score=0.0,
+                expected=pattern_str,
+                actual=context.output,
+                reason="No pattern specified for regex",
+            )
 
         flags = 0
         if not self.config.options.get("case_sensitive", True):
