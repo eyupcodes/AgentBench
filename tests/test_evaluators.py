@@ -340,6 +340,33 @@ def test_tool_argument_with_no_calls_does_not_name_none():
     assert "No tool calls" in res.reason
 
 
+@pytest.mark.parametrize(
+    "options", [{}, {"expected_args": {}}, {"expected_args": None}]
+)
+def test_tool_argument_fails_without_expected_args(options):
+    config = EvaluatorConfig(
+        type="tool_argument", options={"tool_name": "search", **options}
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.score == 0.0
+    assert "expected_args" in res.reason
+
+
+def test_tool_argument_fails_when_expected_args_is_not_a_mapping():
+    config = EvaluatorConfig(
+        type="tool_argument",
+        options={"tool_name": "search", "expected_args": ["query"]},
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "expected_args" in res.reason
+
+
 @pytest.mark.parametrize("expected", [None, [], "", [""], [None]])
 def test_contains_fails_without_expected_substrings(expected):
     evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected=expected))
