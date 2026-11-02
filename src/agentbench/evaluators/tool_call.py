@@ -106,7 +106,17 @@ class ToolArgumentEvaluator(BaseEvaluator):
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
         tool_name = self.config.options.get("tool_name")
-        expected_args = self.config.options.get("expected_args", {})
+        expected_args = self.config.options.get("expected_args")
+
+        if not isinstance(expected_args, dict) or not expected_args:
+            return EvaluationResult(
+                evaluator_type="tool_argument",
+                passed=False,
+                score=0.0,
+                expected={"tool_name": tool_name, "args": expected_args},
+                actual=None,
+                reason="No expected_args configured: set options.expected_args",
+            )
 
         matching_calls = (
             [tc for tc in context.tool_calls if tc.tool_name == tool_name]

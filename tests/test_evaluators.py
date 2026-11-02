@@ -338,3 +338,60 @@ def test_tool_argument_with_no_calls_does_not_name_none():
     assert res.passed is False
     assert "None" not in res.reason
     assert "No tool calls" in res.reason
+
+
+@pytest.mark.parametrize(
+    "options", [{}, {"expected_args": {}}, {"expected_args": None}]
+)
+def test_tool_argument_fails_without_expected_args(options):
+    config = EvaluatorConfig(
+        type="tool_argument", options={"tool_name": "search", **options}
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert res.score == 0.0
+    assert "expected_args" in res.reason
+
+
+def test_tool_argument_fails_when_expected_args_is_not_a_mapping():
+    config = EvaluatorConfig(
+        type="tool_argument",
+        options={"tool_name": "search", "expected_args": ["query"]},
+    )
+    res = ToolArgumentEvaluator(config).evaluate(
+        _make_context("done", tool_calls=_TOOLS)
+    )
+    assert res.passed is False
+    assert "expected_args" in res.reason
+
+
+@pytest.mark.parametrize("expected", [None, [], "", [""], [None]])
+def test_contains_fails_without_expected_substrings(expected):
+    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected=expected))
+
+    result = evaluator.evaluate(_make_context("None of it, but some output"))
+
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "No expected substrings" in result.reason
+
+
+def test_contains_uses_task_expected_output_when_config_is_empty():
+    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains"))
+
+    result = evaluator.evaluate(_make_context("the answer is 42", expected="42"))
+
+    assert result.passed is True
+
+
+@pytest.mark.parametrize("options", [{}, {"pattern": ""}])
+def test_regex_fails_without_pattern(options):
+    evaluator = RegexEvaluator(EvaluatorConfig(type="regex", options=options))
+
+    result = evaluator.evaluate(_make_context("any output at all"))
+
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "No pattern specified" in result.reason
