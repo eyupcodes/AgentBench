@@ -308,3 +308,10 @@ async def test_http_llm_request_describes_task_tools():
             },
         }
     ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reply", [[], ["x"], "text", 42, None])
+async def test_http_llm_rejects_non_object_json_reply(reply):
+    with pytest.raises(RuntimeError, match="expected a JSON object"):
+        await _run_http_llm(reply)
