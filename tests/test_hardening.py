@@ -217,3 +217,101 @@ async def test_http_llm_missing_tool_arguments_default_to_empty_object():
     resp = await _run_http_llm(reply)
 
     assert resp.tool_calls[0].tool_input == {}
+
+
+async def _capture_http_llm_request(task):
+    captured = {}
+
+    def fake_urlopen(req, timeout):
+        captured["req"] = req
+        captured["timeout"] = timeout
+        body = {"choices": [{"message": {"content": "ok"}}]}
+        response = MagicMock()
+        response.__enter__.return_value = io.BytesIO(json.dumps(body).encode("utf-8"))
+        return response
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        agent = GenericLLMAgent(
+            api_key="test-key", base_url="https://llm.example/v1/", model="m1"
+        )
+        await agent.run(task, AgentExecutionContext(task=task))
+    return captured
+
+
+@pytest.mark.asyncio
+async def test_http_llm_request_includes_system_prompt_and_auth():
+    task = Task(
+        id="t1",
+        name="Task 1",
+        prompt="Hello",
+        system_prompt="Be brief.",
+        timeout_seconds=7,
+    )
+
+    captured = await _capture_http_llm_request(task)
+
+    req = captured["req"]
+    payload = json.loads(req.data.decode("utf-8"))
+    assert req.full_url == "https://llm.example/v1/chat/completions"
+    assert req.get_header("Authorization") == "Bearer test-key"
+    assert captured["timeout"] == 7
+    assert payload["model"] == "m1"
+    assert payload["messages"] == [
+        {"role": "system", "content": "Be brief."},
+        {"role": "user", "content": "Hello"},
+    ]
+    assert "tools" not in payload
+
+
+@pytest.mark.asyncio
+async def test_http_llm_request_describes_task_tools():
+    task = Task.model_validate(
+        {
+            "id": "t1",
+            "name": "Task 1",
+            "prompt": "Weather?",
+            "tools": [
+                {
+                    "name": "get_weather",
+                    "description": "Look up the weather",
+                    "parameters": {
+                        "city": {
+                            "type": "string",
+                            "description": "City name",
+                            "required": True,
+                        },
+                        "days": {"type": "integer"},
+                    },
+                }
+            ],
+        }
+    )
+
+    captured = await _capture_http_llm_request(task)
+
+    payload = json.loads(captured["req"].data.decode("utf-8"))
+    assert payload["messages"] == [{"role": "user", "content": "Weather?"}]
+    assert payload["tools"] == [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Look up the weather",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string", "description": "City name"},
+                        "days": {"type": "integer", "description": ""},
+                    },
+                    "required": ["city"],
+                },
+            },
+        }
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reply", [[], ["x"], "text", 42, None])
+async def test_http_llm_rejects_non_object_json_reply(reply):
+    with pytest.raises(RuntimeError, match="expected a JSON object"):
+        await _run_http_llm(reply)

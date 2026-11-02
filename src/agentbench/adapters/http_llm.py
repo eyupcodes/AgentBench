@@ -99,6 +99,12 @@ class GenericLLMAgent(BaseAgent):
         except Exception as e:
             raise RuntimeError(f"Failed to query LLM endpoint: {e}") from e
 
+        if not isinstance(resp_data, dict):
+            raise RuntimeError(
+                "Unexpected response from LLM endpoint: expected a JSON object, "
+                f"got {type(resp_data).__name__}"
+            )
+
         # Extract usage
         # Servers may send explicit nulls, so `or` rather than `get` defaults.
         usage_info = resp_data.get("usage") or {}

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The `tool_argument` evaluator fails with a clear reason when `expected_args` is missing, empty or not a mapping, instead of passing any call to the tool (#27).
 - `contains` and `regex` evaluators now fail with a clear reason when no expected substrings or pattern are configured, instead of passing every output (`contains` also no longer searched for the text "none") (#25).
+- `GenericLLMAgent` raises a clear error when the endpoint replies with JSON that is not an object, and its outgoing request (system prompt, tool spec, auth) is now covered by tests (#29).
 - Suite files and report JSON with a UTF-8 BOM (Excel, Windows editors) now load instead of failing to parse (#23).
 
 ### Added
