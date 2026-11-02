@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `GenericLLMAgent` raises a clear error when the endpoint replies with JSON that is not an object, and its outgoing request (system prompt, tool spec, auth) is now covered by tests (#29).
 - Suite files and report JSON with a UTF-8 BOM (Excel, Windows editors) now load instead of failing to parse (#23).
 
 ### Added
