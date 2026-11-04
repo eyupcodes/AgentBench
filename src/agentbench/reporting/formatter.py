@@ -91,15 +91,16 @@ def print_cli_report(
             )
         )
 
+        # Text(...) keeps task ids, names and error text from being parsed as markup.
         table.add_row(
-            r.task_id,
-            r.task_name,
+            Text(r.task_id),
+            Text(r.task_name),
             status_disp,
             score_disp,
             f"{r.execution_time_seconds:.2f}",
             str(len(r.tool_calls)),
             str(r.retry_count),
-            notes or "-",
+            Text(notes or "-"),
         )
 
     console.print(table)
