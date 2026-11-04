@@ -5,6 +5,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from agentbench import __version__
@@ -81,7 +82,7 @@ def run(
     try:
         task_suite = load_suite(suite)
     except Exception as e:
-        console.print(f"[bold red]Failed to load suite:[/] {e}")
+        console.print(f"[bold red]Failed to load suite:[/] {escape(str(e))}")
         raise typer.Exit(code=1) from e
 
     if timeout is not None:
@@ -96,20 +97,23 @@ def run(
         agent_instance = get_adapter(agent)
     except Exception as e:
         console.print(
-            f"[bold red]Failed to instantiate agent adapter '{agent}':[/] {e}"
+            f"[bold red]Failed to instantiate agent adapter '{escape(agent)}':[/] "
+            f"{escape(str(e))}"
         )
         raise typer.Exit(code=1) from e
 
     console.print(
-        f"[bold blue]AgentBench[/] Running suite '[bold cyan]{task_suite.name}[/]' "
-        f"({len(task_suite.tasks)} tasks) against '[bold green]{agent_instance.name}[/]'"
+        f"[bold blue]AgentBench[/] Running suite '[bold cyan]{escape(task_suite.name)}[/]' "
+        f"({len(task_suite.tasks)} tasks) against "
+        f"'[bold green]{escape(agent_instance.name)}[/]'"
     )
 
     def _event_logger(ev):
         if verbose:
             msg = ev.message or f"Event: {ev.event_type.value}"
             console.print(
-                f"  [dim]• {ev.timestamp.strftime('%H:%M:%S')} [{ev.event_type.value}][/dim] {msg}"
+                f"  [dim]• {ev.timestamp.strftime('%H:%M:%S')} "
+                f"\\[{ev.event_type.value}][/dim] {escape(msg)}"
             )
 
     options = RunnerOptions(
@@ -138,7 +142,7 @@ def run(
                 f.write(md_content)
             console.print(f"[bold green]Saved Markdown summary to:[/] {export_md_path}")
     except OSError as e:
-        console.print(f"[bold red]Failed to write report:[/] {e}")
+        console.print(f"[bold red]Failed to write report:[/] {escape(str(e))}")
         raise typer.Exit(code=1) from e
 
     if report.metrics.pass_rate < 100.0 and report.metrics.failed_tasks > 0:
@@ -156,18 +160,19 @@ def validate(
     try:
         task_suite = load_suite(suite)
         console.print("[bold green]Suite is valid![/]")
-        console.print(f"  Name: [bold]{task_suite.name}[/]")
-        console.print(f"  Version: {task_suite.version}")
+        console.print(f"  Name: [bold]{escape(task_suite.name)}[/]")
+        console.print(f"  Version: {escape(str(task_suite.version))}")
         console.print(f"  Tasks: {len(task_suite.tasks)}")
         for t in task_suite.tasks:
             eval_names = [e.type for e in t.evaluators] or (
                 ["exact_match (default)"] if t.expected_output else ["none"]
             )
             console.print(
-                f"    - [cyan]{t.id}[/]: {t.name} (Evaluators: {', '.join(eval_names)})"
+                f"    - [cyan]{escape(t.id)}[/]: {escape(t.name)} "
+                f"(Evaluators: {escape(', '.join(eval_names))})"
             )
     except Exception as e:
-        console.print(f"[bold red]Validation error:[/] {e}")
+        console.print(f"[bold red]Validation error:[/] {escape(str(e))}")
         raise typer.Exit(code=1) from e
 
 
@@ -222,11 +227,11 @@ def report(
     try:
         rep = load_report_json(report_file)
     except Exception as e:
-        console.print(f"[bold red]Failed to load report:[/] {e}")
+        console.print(f"[bold red]Failed to load report:[/] {escape(str(e))}")
         raise typer.Exit(code=1) from e
 
     if md:
-        console.print(generate_markdown_report(rep))
+        console.print(generate_markdown_report(rep), markup=False, highlight=False)
     else:
         print_cli_report(rep, console=console)
 
