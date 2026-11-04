@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `agentbench run --fail-fast` stops starting new tasks after the first failed task; `stop_on_first_failure` is now also honoured with `--concurrency` above 1 (#32).
+
 ### Fixed
 - The `tool_argument` evaluator fails with a clear reason when `expected_args` is missing, empty or not a mapping, instead of passing any call to the tool (#27).
 - `contains` and `regex` evaluators now fail with a clear reason when no expected substrings or pattern are configured, instead of passing every output (`contains` also no longer searched for the text "none") (#25).

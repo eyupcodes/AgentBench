@@ -1,5 +1,6 @@
 """Integration tests for Typer CLI commands."""
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -149,3 +150,39 @@ def test_cli_run_reports_unwritable_output(tmp_path, flag):
     assert result.exit_code == 1
     assert "Failed to write report" in result.output
     assert not isinstance(result.exception, OSError)
+
+
+def test_cli_run_fail_fast_skips_tasks_after_first_failure(tmp_path):
+    suite = TaskSuite(
+        name="Fail Fast Suite",
+        tasks=[
+            Task(
+                id=f"t{i}",
+                name=f"Task {i}",
+                prompt="echo: nope",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="Hello")],
+            )
+            for i in range(1, 4)
+        ],
+    )
+    suite_path = tmp_path / "suite.yaml"
+    save_suite(suite, suite_path)
+    out_json = tmp_path / "report.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "run",
+            "-s",
+            str(suite_path),
+            "-a",
+            "scripted",
+            "--fail-fast",
+            "-o",
+            str(out_json),
+        ],
+    )
+
+    assert result.exit_code == 1
+    report = json.loads(out_json.read_text(encoding="utf-8"))
+    assert [r["task_id"] for r in report["results"]] == ["t1"]
