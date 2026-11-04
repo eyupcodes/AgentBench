@@ -226,6 +226,7 @@ asyncio.run(run())
 - `-c, --concurrency`: Number of concurrent tasks (default: `1`).
 - `-t, --timeout`: Override task timeout in seconds.
 - `-r, --retries`: Override max retries per task.
+- `--fail-fast`: Stop starting new tasks after the first failed task (tasks already running finish).
 - `-v, --verbose`: Show live step-by-step event trace.
 
 ---

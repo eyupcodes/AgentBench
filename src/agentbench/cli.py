@@ -68,6 +68,11 @@ def run(
     retries: int | None = typer.Option(
         None, "--retries", "-r", min=0, help="Override max retry attempts."
     ),
+    fail_fast: bool = typer.Option(
+        False,
+        "--fail-fast",
+        help="Stop starting new tasks after the first failed task.",
+    ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show live execution event traces."
     ),
@@ -109,6 +114,7 @@ def run(
 
     options = RunnerOptions(
         max_concurrency=concurrency,
+        stop_on_first_failure=fail_fast,
         verbose=verbose,
     )
     runner = BenchmarkRunner(
