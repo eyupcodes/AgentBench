@@ -214,12 +214,21 @@ class BenchmarkRunner:
                     break
         else:
             semaphore = asyncio.Semaphore(self.options.max_concurrency)
+            failed = False
 
-            async def _run_bounded(t: Task) -> TaskRunResult:
+            async def _run_bounded(t: Task) -> TaskRunResult | None:
+                nonlocal failed
                 async with semaphore:
-                    return await self.run_task(t, agent)
+                    # Tasks already running finish; tasks not yet started are skipped.
+                    if self.options.stop_on_first_failure and failed:
+                        return None
+                    res = await self.run_task(t, agent)
+                    if not res.passed:
+                        failed = True
+                    return res
 
-            results = await asyncio.gather(*[_run_bounded(t) for t in suite.tasks])
+            gathered = await asyncio.gather(*[_run_bounded(t) for t in suite.tasks])
+            results = [r for r in gathered if r is not None]
 
         return BenchmarkReport.from_results(
             suite_name=suite.name,
