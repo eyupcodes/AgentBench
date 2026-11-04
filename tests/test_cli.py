@@ -186,3 +186,102 @@ def test_cli_run_fail_fast_skips_tasks_after_first_failure(tmp_path):
     assert result.exit_code == 1
     report = json.loads(out_json.read_text(encoding="utf-8"))
     assert [r["task_id"] for r in report["results"]] == ["t1"]
+
+
+def test_cli_run_fails_cleanly_for_missing_suite(tmp_path):
+    result = runner.invoke(app, ["run", "-s", str(tmp_path / "missing.yaml")])
+
+    assert result.exit_code == 1
+    assert "Failed to load suite" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_run_fails_cleanly_for_unknown_agent(tmp_path):
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "-a", "no_such_module.NoAgent"]
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to instantiate agent adapter" in result.output
+
+
+def test_cli_run_verbose_prints_events(tmp_path):
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(app, ["run", "-s", str(suite_path), "-a", "scripted", "-v"])
+
+    assert result.exit_code == 0
+    assert "[task_start]" in result.output
+
+
+def test_cli_validate_rejects_invalid_suite(tmp_path):
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("name: broken\ntasks: not-a-list\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["validate", str(bad)])
+
+    assert result.exit_code == 1
+    assert "Validation error" in result.output
+
+
+def test_cli_init_does_not_overwrite_existing_suite(tmp_path):
+    existing = tmp_path / "sample_suite.yaml"
+    existing.write_text("keep: me\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["init", "--dir", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "already exists" in result.output
+    assert existing.read_text(encoding="utf-8") == "keep: me\n"
+
+
+def test_cli_report_renders_saved_report_as_table_and_markdown(tmp_path):
+    suite_path = _write_suite(tmp_path)
+    out_json = tmp_path / "report.json"
+    run_result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "-a", "scripted", "-o", str(out_json)]
+    )
+    assert run_result.exit_code == 0
+
+    table = runner.invoke(app, ["report", str(out_json)])
+    markdown = runner.invoke(app, ["report", str(out_json), "--md"])
+
+    assert table.exit_code == 0
+    assert "Task 1" in table.output
+    assert markdown.exit_code == 0
+    assert "Option Suite" in markdown.output
+
+
+def test_cli_report_fails_cleanly_for_unreadable_report(tmp_path):
+    broken = tmp_path / "report.json"
+    broken.write_text("{not json", encoding="utf-8")
+
+    result = runner.invoke(app, ["report", str(broken)])
+
+    assert result.exit_code == 1
+    assert "Failed to load report" in result.output
+
+
+def test_cli_run_survives_markup_like_text_in_task_errors(tmp_path):
+    suite = TaskSuite(
+        name="Brackets [/x]",
+        tasks=[
+            Task(
+                id="t1",
+                name="Task [bold]",
+                prompt="echo: nope",
+                expected_output="ok",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="ok")],
+            )
+        ],
+    )
+    suite_path = tmp_path / "suite.yaml"
+    save_suite(suite, suite_path)
+
+    result = runner.invoke(app, ["run", "-s", str(suite_path), "-a", "scripted", "-v"])
+
+    assert result.exit_code == 1  # the task fails; the report must still render
+    assert "Traceback" not in result.output
+    assert "Brackets [/x]" in result.output

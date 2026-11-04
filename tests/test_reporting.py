@@ -134,3 +134,27 @@ def test_empty_report_json_round_trip(tmp_path):
     path = tmp_path / "empty.json"
     save_report_json(report, path)
     assert load_report_json(path) == report
+
+
+def test_print_cli_report_renders_bracketed_error_text():
+    from io import StringIO
+
+    from rich.console import Console
+
+    from agentbench.reporting.formatter import print_cli_report
+
+    result = TaskRunResult(
+        task_id="t[/x]",
+        task_name="Name [bold]",
+        agent_name="agent",
+        status=RunStatus.ERROR,
+        error="ValueError: bad [/oops] and [Errno 2]",
+    )
+    report = BenchmarkReport.from_results("suite", "agent", [result])
+    buffer = StringIO()
+
+    print_cli_report(report, console=Console(file=buffer, width=200))
+
+    output = buffer.getvalue()
+    assert "bad [/oops] and [Errno 2]" in output
+    assert "t[/x]" in output
