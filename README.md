@@ -127,6 +127,8 @@ agentbench run --suite sample_suite.yaml --agent mock --verbose
 name: agent-production-suite
 version: "1.0"
 description: "Core tool verification and reasoning suite."
+default_timeout_seconds: 60   # tasks without their own timeout_seconds
+default_max_retries: 2        # tasks without their own max_retries
 
 tasks:
   - id: weather-01
