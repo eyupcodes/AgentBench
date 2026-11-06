@@ -134,3 +134,51 @@ def test_load_suite_validates_nested_tasks(tmp_path, suite_data):
 
     assert exc_info.value.errors()[0]["loc"] == ("tasks", 0, "prompt")
     assert exc_info.value.errors()[0]["type"] == "missing"
+
+
+def _write_yaml(tmp_path, text):
+    path = tmp_path / "suite.yaml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_tasks_inherit_suite_defaults(tmp_path):
+    path = _write_yaml(
+        tmp_path,
+        "name: s\n"
+        "default_timeout_seconds: 120\n"
+        "default_max_retries: 3\n"
+        "tasks:\n"
+        "  - {id: a, name: A, prompt: p}\n",
+    )
+
+    task = load_suite(path).tasks[0]
+
+    assert task.timeout_seconds == 120
+    assert task.max_retries == 3
+
+
+def test_explicit_task_values_beat_suite_defaults(tmp_path):
+    path = _write_yaml(
+        tmp_path,
+        "name: s\n"
+        "default_timeout_seconds: 120\n"
+        "default_max_retries: 3\n"
+        "tasks:\n"
+        "  - {id: a, name: A, prompt: p, timeout_seconds: 5, max_retries: 1}\n"
+        "  - {id: b, name: B, prompt: p, timeout_seconds: 30.0}\n",
+    )
+
+    first, second = load_suite(path).tasks
+
+    assert (first.timeout_seconds, first.max_retries) == (5, 1)
+    # An explicit value equal to the model default is still explicit.
+    assert (second.timeout_seconds, second.max_retries) == (30.0, 3)
+
+
+def test_suite_without_defaults_keeps_task_defaults(tmp_path):
+    path = _write_yaml(tmp_path, "name: s\ntasks:\n  - {id: a, name: A, prompt: p}\n")
+
+    task = load_suite(path).tasks[0]
+
+    assert (task.timeout_seconds, task.max_retries) == (30.0, 1)

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ToolParameter(BaseModel):
@@ -59,3 +59,13 @@ class TaskSuite(BaseModel):
     default_timeout_seconds: float = 30.0
     default_max_retries: int = 1
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _inherit_suite_defaults(self) -> "TaskSuite":
+        """Give tasks that do not set a limit themselves the suite-level default."""
+        for task in self.tasks:
+            if "timeout_seconds" not in task.model_fields_set:
+                task.timeout_seconds = self.default_timeout_seconds
+            if "max_retries" not in task.model_fields_set:
+                task.max_retries = self.default_max_retries
+        return self
