@@ -240,6 +240,16 @@ class NumericToleranceEvaluator(BaseEvaluator):
         actual = context.output
         tolerance = float(self.config.options.get("tolerance", 1e-5))
 
+        if expected is None:
+            return EvaluationResult(
+                evaluator_type="numeric_tolerance",
+                passed=False,
+                score=0.0,
+                expected=expected,
+                actual=actual,
+                reason="No expected value specified for numeric tolerance",
+            )
+
         try:
             exp_num = float(expected)
             act_num = float(actual)

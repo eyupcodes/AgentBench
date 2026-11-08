@@ -32,6 +32,9 @@ jobs:
     - name: Lint
       run: ruff check .
 
+    - name: Type check
+      run: mypy
+
     - name: Run tests
       run: |
         pytest -v --cov=agentbench

@@ -315,3 +315,19 @@ async def test_http_llm_request_describes_task_tools():
 async def test_http_llm_rejects_non_object_json_reply(reply):
     with pytest.raises(RuntimeError, match="expected a JSON object"):
         await _run_http_llm(reply)
+
+
+def test_http_llm_base_url_resolution(monkeypatch):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    assert GenericLLMAgent().base_url == "https://api.openai.com/v1"
+
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://env.example/v1/")
+    assert GenericLLMAgent().base_url == "https://env.example/v1"
+    assert (
+        GenericLLMAgent(base_url="https://arg.example/v1/").base_url
+        == "https://arg.example/v1"
+    )
+
+    # An empty variable falls back to the default instead of an empty URL.
+    monkeypatch.setenv("OPENAI_BASE_URL", "")
+    assert GenericLLMAgent().base_url == "https://api.openai.com/v1"
