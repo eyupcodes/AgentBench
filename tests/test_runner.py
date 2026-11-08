@@ -159,3 +159,48 @@ async def test_runner_reports_unknown_evaluator_type_as_failure():
     assert result.passed is False
     assert result.evaluations[0].evaluator_type == "setup"
     assert "exact_mtach" in result.evaluations[0].reason
+
+
+def _failfast_suite() -> TaskSuite:
+    return TaskSuite(
+        name="Fail Fast",
+        tasks=[
+            Task(
+                id=f"t{i}",
+                name=f"Task {i}",
+                prompt="p",
+                expected_output="ok",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="ok")],
+            )
+            for i in range(1, 5)
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("concurrency", [1, 2])
+async def test_runner_stop_on_first_failure_skips_remaining_tasks(concurrency):
+    agent = MockAgent(
+        responses={"t1": "ok", "t2": "wrong", "t3": "ok", "t4": "ok"},
+    )
+    runner = BenchmarkRunner(
+        RunnerOptions(max_concurrency=concurrency, stop_on_first_failure=True)
+    )
+
+    report = await runner.run_suite(_failfast_suite(), agent)
+
+    ids = [r.task_id for r in report.results]
+    assert ids[:2] == ["t1", "t2"]
+    assert "t4" not in ids
+    assert report.metrics.failed_tasks == 1
+
+
+@pytest.mark.asyncio
+async def test_runner_concurrent_runs_all_tasks_without_fail_fast():
+    agent = MockAgent(responses={"t1": "ok", "t2": "wrong", "t3": "ok", "t4": "ok"})
+    runner = BenchmarkRunner(RunnerOptions(max_concurrency=2))
+
+    report = await runner.run_suite(_failfast_suite(), agent)
+
+    assert [r.task_id for r in report.results] == ["t1", "t2", "t3", "t4"]
+    assert report.metrics.failed_tasks == 1

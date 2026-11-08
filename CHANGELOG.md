@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `agentbench run --fail-fast` stops starting new tasks after the first failed task; `stop_on_first_failure` is now also honoured with `--concurrency` above 1 (#32).
+
 ### Fixed
 - The `numeric_tolerance` evaluator fails with a clear reason when no expected value is configured, and an empty `OPENAI_BASE_URL` falls back to the default endpoint (#38).
+- Suite-level `default_timeout_seconds` and `default_max_retries` now apply to tasks that do not set `timeout_seconds` / `max_retries` themselves; they were previously ignored (#36).
+- Task ids, names, error text and event messages containing square brackets (such as `[/x]`) no longer crash or get mangled in the `run` results table, `--verbose` event log, `report --md` and CLI error lines; `--verbose` shows the event type again (#34).
 - The `tool_argument` evaluator fails with a clear reason when `expected_args` is missing, empty or not a mapping, instead of passing any call to the tool (#27).
 - `contains` and `regex` evaluators now fail with a clear reason when no expected substrings or pattern are configured, instead of passing every output (`contains` also no longer searched for the text "none") (#25).
 - `GenericLLMAgent` raises a clear error when the endpoint replies with JSON that is not an object, and its outgoing request (system prompt, tool spec, auth) is now covered by tests (#29).

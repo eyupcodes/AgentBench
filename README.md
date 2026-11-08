@@ -127,6 +127,8 @@ agentbench run --suite sample_suite.yaml --agent mock --verbose
 name: agent-production-suite
 version: "1.0"
 description: "Core tool verification and reasoning suite."
+default_timeout_seconds: 60   # tasks without their own timeout_seconds
+default_max_retries: 2        # tasks without their own max_retries
 
 tasks:
   - id: weather-01
@@ -226,6 +228,7 @@ asyncio.run(run())
 - `-c, --concurrency`: Number of concurrent tasks (default: `1`).
 - `-t, --timeout`: Override task timeout in seconds.
 - `-r, --retries`: Override max retries per task.
+- `--fail-fast`: Stop starting new tasks after the first failed task (tasks already running finish).
 - `-v, --verbose`: Show live step-by-step event trace.
 
 ---
