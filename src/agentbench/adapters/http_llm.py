@@ -28,9 +28,10 @@ class GenericLLMAgent(BaseAgent):
         super().__init__(name=name, config=config)
         self.model = model
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
-        self.base_url = (
-            base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        ).rstrip("/")
+        resolved_base_url: str = (
+            base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+        )
+        self.base_url = resolved_base_url.rstrip("/")
         self.temperature = temperature
 
     async def run(self, task: Task, context: AgentExecutionContext) -> AgentResponse:
