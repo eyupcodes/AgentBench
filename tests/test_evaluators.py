@@ -111,6 +111,14 @@ def test_numeric_tolerance_evaluator():
     assert evaluator.evaluate(_make_context(3.1500)).passed is False
 
 
+def test_numeric_tolerance_without_expected_value_fails_clearly():
+    evaluator = NumericToleranceEvaluator(EvaluatorConfig(type="numeric_tolerance"))
+    result = evaluator.evaluate(_make_context(3.14))
+    assert result.passed is False
+    assert result.score == 0.0
+    assert "No expected value" in result.reason
+
+
 def test_tool_call_evaluators():
     tools = [
         ToolCallEvent(tool_name="search", tool_input={"query": "weather"}),
