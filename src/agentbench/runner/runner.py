@@ -15,6 +15,16 @@ from agentbench.models.task import Task, TaskSuite
 from agentbench.runner.context import RunnerOptions
 
 
+def _weighted_score(evaluations: list[EvaluationResult], weights: list[float]) -> float:
+    """Weighted mean of evaluator scores; a plain mean when all weights are 0."""
+    total = sum(weights)
+    if total <= 0:
+        return round(sum(ev.score for ev in evaluations) / len(evaluations), 4)
+    return round(
+        sum(ev.score * w for ev, w in zip(evaluations, weights, strict=True)) / total, 4
+    )
+
+
 class BenchmarkRunner:
     """Orchestrates benchmark runs across tasks and agent adapters."""
 
@@ -154,6 +164,9 @@ class BenchmarkRunner:
                     )
                 )
             if evaluators or evaluations:
+                weights = [1.0] * len(evaluations) + [
+                    e.config.weight for e in evaluators
+                ]
                 for evaluator in evaluators:
                     try:
                         res = evaluator.evaluate(eval_ctx)
@@ -167,9 +180,7 @@ class BenchmarkRunner:
                     evaluations.append(res)
 
                 overall_passed = all(ev.passed for ev in evaluations)
-                overall_score = round(
-                    sum(ev.score for ev in evaluations) / len(evaluations), 4
-                )
+                overall_score = _weighted_score(evaluations, weights)
             else:
                 # If no evaluators configured, execution success counts as passed
                 overall_passed = True
