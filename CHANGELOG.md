@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- A task's `overall_score` is now the weighted mean of its evaluator scores, using each evaluator's `weight` (default 1.0, so existing suites score the same); negative weights are rejected (#41).
+
 ### Added
 - `agentbench run --fail-fast` stops starting new tasks after the first failed task; `stop_on_first_failure` is now also honoured with `--concurrency` above 1 (#32).
 

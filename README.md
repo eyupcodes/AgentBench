@@ -163,6 +163,8 @@ tasks:
           amount: 45.0
 ```
 
+Each evaluator accepts an optional `weight` (default `1`, must be `>= 0`). A task's `overall_score` is the weighted mean of its evaluator scores; a task still passes only if every evaluator passes.
+
 ---
 
 ## 💻 Python SDK Usage
