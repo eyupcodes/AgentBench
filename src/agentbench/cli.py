@@ -145,8 +145,9 @@ def run(
         console.print(f"[bold red]Failed to write report:[/] {escape(str(e))}")
         raise typer.Exit(code=1) from e
 
-    if report.metrics.pass_rate < 100.0 and report.metrics.failed_tasks > 0:
-        # Exit with non-zero if tasks failed
+    metrics = report.metrics
+    if metrics.failed_tasks + metrics.timeout_tasks + metrics.error_tasks > 0:
+        # Exit non-zero if any task failed, timed out or errored
         raise typer.Exit(code=1)
 
 

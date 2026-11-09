@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from agentbench.adapters.mock import MockAgent
+from agentbench.adapters.registry import _ADAPTER_REGISTRY
 from agentbench.cli import app
 from agentbench.loader import save_suite
 from agentbench.models.task import EvaluatorConfig, Task, TaskSuite
@@ -285,3 +287,32 @@ def test_cli_run_survives_markup_like_text_in_task_errors(tmp_path):
     assert result.exit_code == 1  # the task fails; the report must still render
     assert "Traceback" not in result.output
     assert "Brackets [/x]" in result.output
+
+
+class _SlowAgent(MockAgent):
+    def __init__(self, **kwargs):
+        super().__init__(name="slow", delay_seconds=1.0, **kwargs)
+
+
+class _BrokenAgent(MockAgent):
+    def __init__(self, **kwargs):
+        super().__init__(name="broken", simulate_error="boom", **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("agent_cls", "extra_args"),
+    [(_SlowAgent, ["--timeout", "0.05"]), (_BrokenAgent, [])],
+    ids=["timeout", "error"],
+)
+def test_cli_run_exits_nonzero_on_timeout_or_error(
+    tmp_path, monkeypatch, agent_cls, extra_args
+):
+    monkeypatch.setitem(_ADAPTER_REGISTRY, "flaky", agent_cls)
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "flaky", "--retries", "0", *extra_args],
+    )
+
+    assert result.exit_code == 1

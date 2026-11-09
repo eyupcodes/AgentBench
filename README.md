@@ -231,6 +231,8 @@ asyncio.run(run())
 - `--fail-fast`: Stop starting new tasks after the first failed task (tasks already running finish).
 - `-v, --verbose`: Show live step-by-step event trace.
 
+`agentbench run` exits with code `1` if any task failed, timed out or errored, and `0` when every task passed, so it can gate CI.
+
 ---
 
 ## 🧪 Running Tests
