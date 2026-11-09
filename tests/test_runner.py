@@ -204,3 +204,36 @@ async def test_runner_concurrent_runs_all_tasks_without_fail_fast():
 
     assert [r.task_id for r in report.results] == ["t1", "t2", "t3", "t4"]
     assert report.metrics.failed_tasks == 1
+
+
+def _weighted_task(w_pass: float, w_fail: float) -> Task:
+    return Task(
+        id="t_weighted",
+        name="Weighted Task",
+        prompt="echo",
+        evaluators=[
+            EvaluatorConfig(type="exact_match", expected="ok", weight=w_pass),
+            EvaluatorConfig(type="exact_match", expected="nope", weight=w_fail),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("w_pass", "w_fail", "expected_score"),
+    [(3.0, 1.0, 0.75), (1.0, 1.0, 0.5), (0.0, 0.0, 0.5), (0.0, 2.0, 0.0)],
+)
+async def test_runner_overall_score_uses_evaluator_weights(
+    w_pass, w_fail, expected_score
+):
+    result = await BenchmarkRunner().run_task(
+        _weighted_task(w_pass, w_fail), MockAgent(default_response="ok")
+    )
+
+    assert result.overall_score == expected_score
+    assert result.passed is False  # every evaluator must still pass
+
+
+def test_evaluator_weight_must_not_be_negative():
+    with pytest.raises(ValueError):
+        EvaluatorConfig(type="exact_match", expected="x", weight=-1.0)

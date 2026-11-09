@@ -29,7 +29,7 @@ class EvaluatorConfig(BaseModel):
     type: str  # e.g., "exact_match", "contains", "regex", "json_schema", "tool_call", "custom"
     expected: Any | None = None
     options: dict[str, Any] = Field(default_factory=dict)
-    weight: float = 1.0
+    weight: float = Field(default=1.0, ge=0)
     description: str | None = None
 
 
