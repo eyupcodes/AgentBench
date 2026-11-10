@@ -316,3 +316,55 @@ def test_cli_run_exits_nonzero_on_timeout_or_error(
     )
 
     assert result.exit_code == 1
+
+
+def _write_half_passing_suite(tmp_path):
+    suite = TaskSuite(
+        name="Half Suite",
+        tasks=[
+            Task(
+                id=task_id,
+                name=task_id,
+                prompt=f"echo: {expected}",
+                evaluators=[EvaluatorConfig(type="exact_match", expected="ok")],
+            )
+            for task_id, expected in (("pass", "ok"), ("fail", "nope"))
+        ],
+    )
+    suite_path = tmp_path / "half.yaml"
+    save_suite(suite, suite_path)
+    return suite_path
+
+
+def test_cli_run_min_pass_rate_met_exits_zero_despite_failures(tmp_path):
+    suite_path = _write_half_passing_suite(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", "--min-pass-rate", "50"],
+    )
+
+    assert result.exit_code == 0, result.output
+
+
+def test_cli_run_min_pass_rate_not_met_exits_one(tmp_path):
+    suite_path = _write_half_passing_suite(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", "--min-pass-rate", "51"],
+    )
+
+    assert result.exit_code == 1
+    assert "below the required 51" in result.output
+
+
+@pytest.mark.parametrize("value", ["-1", "100.5"])
+def test_cli_run_min_pass_rate_rejects_out_of_range(tmp_path, value):
+    suite_path = _write_half_passing_suite(tmp_path)
+
+    result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "--min-pass-rate", value]
+    )
+
+    assert result.exit_code == 2

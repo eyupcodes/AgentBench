@@ -74,6 +74,16 @@ def run(
         "--fail-fast",
         help="Stop starting new tasks after the first failed task.",
     ),
+    min_pass_rate: float | None = typer.Option(
+        None,
+        "--min-pass-rate",
+        min=0,
+        max=100,
+        help=(
+            "Exit 1 only if the suite pass rate (percent) is below this value, "
+            "instead of when any task fails."
+        ),
+    ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show live execution event traces."
     ),
@@ -146,6 +156,14 @@ def run(
         raise typer.Exit(code=1) from e
 
     metrics = report.metrics
+    if min_pass_rate is not None:
+        if metrics.pass_rate < min_pass_rate:
+            console.print(
+                f"[bold red]Pass rate {metrics.pass_rate:g}% is below the "
+                f"required {min_pass_rate:g}%.[/]"
+            )
+            raise typer.Exit(code=1)
+        return
     if metrics.failed_tasks + metrics.timeout_tasks + metrics.error_tasks > 0:
         # Exit non-zero if any task failed, timed out or errored
         raise typer.Exit(code=1)
