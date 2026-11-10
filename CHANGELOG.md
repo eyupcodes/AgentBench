@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A task's `overall_score` is now the weighted mean of its evaluator scores, using each evaluator's `weight` (default 1.0, so existing suites score the same); negative weights are rejected (#41).
 
 ### Added
+- `agentbench run --min-pass-rate PERCENT` exits 1 only when the suite pass rate is below the threshold, so CI can gate non-deterministic agents on a pass rate instead of on every task passing (#44).
 - `agentbench run --fail-fast` stops starting new tasks after the first failed task; `stop_on_first_failure` is now also honoured with `--concurrency` above 1 (#32).
 
 ### Fixed

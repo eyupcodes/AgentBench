@@ -231,9 +231,10 @@ asyncio.run(run())
 - `-t, --timeout`: Override task timeout in seconds.
 - `-r, --retries`: Override max retries per task.
 - `--fail-fast`: Stop starting new tasks after the first failed task (tasks already running finish).
+- `--min-pass-rate PERCENT`: Exit `1` only when the suite pass rate (0-100) is below `PERCENT`, instead of on any failed task. Useful for non-deterministic agents.
 - `-v, --verbose`: Show live step-by-step event trace.
 
-`agentbench run` exits with code `1` if any task failed, timed out or errored, and `0` when every task passed, so it can gate CI.
+`agentbench run` exits with code `1` if any task failed, timed out or errored, and `0` when every task passed, so it can gate CI. With `--min-pass-rate`, the exit code depends only on the pass rate threshold.
 
 ---
 
