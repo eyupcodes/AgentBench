@@ -1,6 +1,7 @@
 """Typer CLI interface for AgentBench."""
 
 import asyncio
+import os
 from pathlib import Path
 
 import typer
@@ -36,6 +37,33 @@ def _positive_timeout(value: float | None) -> float | None:
     if value is not None and value <= 0:
         raise typer.BadParameter("must be greater than 0")
     return value
+
+
+def _check_output_path(path: Path | None) -> None:
+    """Exit before any task runs if ``path`` cannot be written.
+
+    Nothing is created: the nearest existing ancestor must be a writable
+    directory, because the report writers create missing parent directories.
+    """
+    if path is None:
+        return
+    problem = None
+    if path.is_dir():
+        problem = "is a directory"
+    else:
+        parent = path.absolute().parent
+        while not parent.exists() and parent != parent.parent:
+            parent = parent.parent
+        if not parent.is_dir():
+            problem = f"not a directory: {parent}"
+        elif not os.access(parent, os.W_OK | os.X_OK):
+            problem = f"directory is not writable: {parent}"
+    if problem:
+        console.print(
+            f"[bold red]Failed to write report:[/] {escape(str(path))}: "
+            f"{escape(problem)}"
+        )
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -89,6 +117,9 @@ def run(
     ),
 ) -> None:
     """Run a benchmark suite against an agent adapter."""
+    _check_output_path(output)
+    _check_output_path(export_md)
+
     try:
         task_suite = load_suite(suite)
     except Exception as e:
