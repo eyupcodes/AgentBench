@@ -368,3 +368,67 @@ def test_cli_run_min_pass_rate_rejects_out_of_range(tmp_path, value):
     )
 
     assert result.exit_code == 2
+
+
+@pytest.mark.parametrize("flag", ["--output", "--export-md"])
+def test_cli_run_rejects_unwritable_output_before_running(tmp_path, flag):
+    suite_path = _write_suite(tmp_path)
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", flag, str(blocker / "r.out")],
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to write report" in result.output
+    assert "Running suite" not in result.output
+
+
+@pytest.mark.parametrize("flag", ["--output", "--export-md"])
+def test_cli_run_rejects_directory_as_output_before_running(tmp_path, flag):
+    suite_path = _write_suite(tmp_path)
+
+    result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "-a", "scripted", flag, str(tmp_path)]
+    )
+
+    assert result.exit_code == 1
+    assert "is a directory" in result.output
+    assert "Running suite" not in result.output
+
+
+def test_cli_run_accepts_output_in_missing_directory(tmp_path):
+    suite_path = _write_suite(tmp_path)
+    out = tmp_path / "new" / "deeper" / "report.json"
+
+    result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "-a", "scripted", "--output", str(out)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert out.is_file()
+
+
+def test_cli_run_preflight_creates_nothing_when_it_fails(tmp_path):
+    suite_path = _write_suite(tmp_path)
+    missing = tmp_path / "newdir" / "r.json"
+
+    result = runner.invoke(
+        app,
+        [
+            "run",
+            "-s",
+            str(suite_path),
+            "-a",
+            "scripted",
+            "--output",
+            str(missing),
+            "--export-md",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert not missing.parent.exists()
