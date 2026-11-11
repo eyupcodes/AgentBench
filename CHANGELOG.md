@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `agentbench run --fail-fast` stops starting new tasks after the first failed task; `stop_on_first_failure` is now also honoured with `--concurrency` above 1 (#32).
 
 ### Fixed
+- `agentbench run` checks `--output` and `--export-md` before starting the suite, so an unwritable path no longer discards the results of a finished run (#46).
 - `agentbench run` now exits with code 1 when any task times out or errors, not only when an evaluation fails (#40).
 - The `numeric_tolerance` evaluator fails with a clear reason when no expected value is configured, and an empty `OPENAI_BASE_URL` falls back to the default endpoint (#38).
 - Suite-level `default_timeout_seconds` and `default_max_retries` now apply to tasks that do not set `timeout_seconds` / `max_retries` themselves; they were previously ignored (#36).
