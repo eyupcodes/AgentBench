@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `contains` and `regex` evaluators no longer treat falsy outputs (`0`, `0.0`, `False`) or an `expected: 0` pattern as empty text; only `None` means no output (#48).
+
 ### Changed
 - A task's `overall_score` is now the weighted mean of its evaluator scores, using each evaluator's `weight` (default 1.0, so existing suites score the same); negative weights are rejected (#41).
 

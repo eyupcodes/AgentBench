@@ -403,3 +403,35 @@ def test_regex_fails_without_pattern(options):
     assert result.passed is False
     assert result.score == 0.0
     assert "No pattern specified" in result.reason
+
+
+@pytest.mark.parametrize("output", [0, 0.0, False])
+def test_contains_matches_falsy_outputs(output):
+    evaluator = ContainsEvaluator(
+        EvaluatorConfig(type="contains", expected=str(output))
+    )
+
+    assert evaluator.evaluate(_make_context(output)).passed is True
+
+
+def test_regex_matches_falsy_output():
+    evaluator = RegexEvaluator(
+        EvaluatorConfig(type="regex", options={"pattern": "^False$"})
+    )
+
+    assert evaluator.evaluate(_make_context(False)).passed is True
+
+
+def test_regex_accepts_falsy_expected_as_pattern():
+    evaluator = RegexEvaluator(EvaluatorConfig(type="regex", expected=0))
+
+    result = evaluator.evaluate(_make_context("0"))
+
+    assert result.passed is True
+    assert "No pattern specified" not in result.reason
+
+
+def test_contains_with_none_output_still_fails():
+    evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected="x"))
+
+    assert evaluator.evaluate(_make_context(None)).passed is False
