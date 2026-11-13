@@ -64,7 +64,7 @@ class ContainsEvaluator(BaseEvaluator):
             if self.config.expected is not None
             else context.task.expected_output
         )
-        actual = str(context.output or "")
+        actual = "" if context.output is None else str(context.output)
         case_sensitive = self.config.options.get("case_sensitive", False)
 
         if not case_sensitive:
@@ -124,10 +124,10 @@ class RegexEvaluator(BaseEvaluator):
     """Evaluates whether the agent output matches a regular expression pattern."""
 
     def evaluate(self, context: EvaluationContext) -> EvaluationResult:
-        pattern_str = self.config.options.get("pattern") or str(
-            self.config.expected or ""
+        pattern_str = self.config.options.get("pattern") or (
+            "" if self.config.expected is None else str(self.config.expected)
         )
-        actual = str(context.output or "")
+        actual = "" if context.output is None else str(context.output)
 
         if not pattern_str:
             return EvaluationResult(
