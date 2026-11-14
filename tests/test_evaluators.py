@@ -475,3 +475,33 @@ def test_contains_case_sensitive_still_distinguishes_case_but_not_composition():
 
     assert evaluator.evaluate(_make_context("Café open")).passed is True
     assert evaluator.evaluate(_make_context("café open")).passed is False
+
+
+def _numeric(expected, output, **options):
+    evaluator = NumericToleranceEvaluator(
+        EvaluatorConfig(type="numeric_tolerance", expected=expected, options=options)
+    )
+    return evaluator.evaluate(_make_context(output))
+
+
+def test_numeric_tolerance_matches_equal_infinities():
+    assert _numeric("inf", "inf").passed is True
+    assert _numeric("-inf", float("-inf")).passed is True
+    assert _numeric("inf", "-inf").passed is False
+
+
+def test_numeric_tolerance_nan_never_matches():
+    assert _numeric("nan", "nan").passed is False
+
+
+@pytest.mark.parametrize("tolerance", [-1, float("nan"), "abc", None, True])
+def test_numeric_tolerance_rejects_invalid_tolerance(tolerance):
+    result = _numeric(1, 1.0, tolerance=tolerance)
+
+    assert result.passed is False
+    assert "Invalid tolerance" in result.reason
+
+
+def test_numeric_tolerance_rejects_boolean_values():
+    assert "Boolean" in _numeric(1, True).reason
+    assert _numeric(True, 1).passed is False

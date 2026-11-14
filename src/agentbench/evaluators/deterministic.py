@@ -1,6 +1,7 @@
 """Deterministic evaluators for string matching, regex, numbers, and structured data."""
 
 import json
+import math
 import re
 import unicodedata
 
@@ -247,7 +248,27 @@ class NumericToleranceEvaluator(BaseEvaluator):
             else context.task.expected_output
         )
         actual = context.output
-        tolerance = float(self.config.options.get("tolerance", 1e-5))
+
+        def fail(reason: str) -> EvaluationResult:
+            return EvaluationResult(
+                evaluator_type="numeric_tolerance",
+                passed=False,
+                score=0.0,
+                expected=expected,
+                actual=actual,
+                reason=reason,
+            )
+
+        raw_tolerance = self.config.options.get("tolerance", 1e-5)
+        try:
+            tolerance = float(raw_tolerance)
+        except (ValueError, TypeError):
+            tolerance = math.nan
+        if isinstance(raw_tolerance, bool) or not tolerance >= 0:
+            return fail(f"Invalid tolerance {raw_tolerance!r}: must be a number >= 0")
+
+        if isinstance(actual, bool) or isinstance(expected, bool):
+            return fail("Boolean values are not numbers for numeric tolerance")
 
         if expected is None:
             return EvaluationResult(
@@ -262,7 +283,8 @@ class NumericToleranceEvaluator(BaseEvaluator):
         try:
             exp_num = float(expected)
             act_num = float(actual)
-            diff = abs(exp_num - act_num)
+            # Equal values (including matching infinities) pass; inf - inf is NaN.
+            diff = 0.0 if exp_num == act_num else abs(exp_num - act_num)
             passed = diff <= tolerance
             return EvaluationResult(
                 evaluator_type="numeric_tolerance",
