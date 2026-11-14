@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The `numeric_tolerance` evaluator passes equal infinities, and fails with a clear reason for a negative, NaN or non-numeric `tolerance` and for boolean values instead of crashing or accepting `True` as `1` (#51).
 - `contains` and `regex` evaluators no longer treat falsy outputs (`0`, `0.0`, `False`) or an `expected: 0` pattern as empty text; only `None` means no output (#48).
 - `exact_match` compares strings after NFC normalization and `contains` after NFKC normalization, and case-insensitive modes use `casefold()`; composed and decomposed accents (`café`) and `ß`/`SS` no longer count as different (#50).
 
