@@ -2,9 +2,16 @@
 
 import json
 import re
+import unicodedata
 
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
+
+
+def _contains_text(text: str, case_sensitive: bool) -> str:
+    """NFKC-normalise ``text`` and, unless case-sensitive, case-fold it."""
+    text = unicodedata.normalize("NFKC", text)
+    return text if case_sensitive else text.casefold()
 
 
 class ExactMatchEvaluator(BaseEvaluator):
@@ -35,12 +42,16 @@ class ExactMatchEvaluator(BaseEvaluator):
         act_val = actual
 
         if isinstance(exp_val, str) and isinstance(act_val, str):
+            # NFC only joins canonically equivalent spellings (e + combining
+            # accent vs a single character); it does not loosen the match.
+            exp_val = unicodedata.normalize("NFC", exp_val)
+            act_val = unicodedata.normalize("NFC", act_val)
             if strip_ws:
                 exp_val = exp_val.strip()
                 act_val = act_val.strip()
             if not case_sensitive:
-                exp_val = exp_val.lower()
-                act_val = act_val.lower()
+                exp_val = exp_val.casefold()
+                act_val = act_val.casefold()
 
         passed = exp_val == act_val
         return EvaluationResult(
@@ -67,8 +78,7 @@ class ContainsEvaluator(BaseEvaluator):
         actual = "" if context.output is None else str(context.output)
         case_sensitive = self.config.options.get("case_sensitive", False)
 
-        if not case_sensitive:
-            actual = actual.lower()
+        actual = _contains_text(actual, case_sensitive)
 
         # Expected can be a single string or a list of required substrings
         targets = (
@@ -96,8 +106,7 @@ class ContainsEvaluator(BaseEvaluator):
 
         for target in targets:
             tgt_str = str(target)
-            check_tgt = tgt_str if case_sensitive else tgt_str.lower()
-            if check_tgt not in actual:
+            if _contains_text(tgt_str, case_sensitive) not in actual:
                 missing.append(tgt_str)
 
         passed = len(missing) == 0

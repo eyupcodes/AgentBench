@@ -435,3 +435,43 @@ def test_contains_with_none_output_still_fails():
     evaluator = ContainsEvaluator(EvaluatorConfig(type="contains", expected="x"))
 
     assert evaluator.evaluate(_make_context(None)).passed is False
+
+
+def test_exact_match_treats_composed_and_decomposed_accents_as_equal():
+    evaluator = ExactMatchEvaluator(
+        EvaluatorConfig(type="exact_match", expected="café")
+    )
+
+    assert evaluator.evaluate(_make_context("café")).passed is True
+    assert evaluator.evaluate(_make_context("cafe")).passed is False
+
+
+def test_exact_match_case_insensitive_uses_casefold():
+    evaluator = ExactMatchEvaluator(
+        EvaluatorConfig(
+            type="exact_match", expected="STRASSE", options={"case_sensitive": False}
+        )
+    )
+
+    assert evaluator.evaluate(_make_context("straße")).passed is True
+
+
+def test_contains_matches_decomposed_accents_and_casefolded_text():
+    evaluator = ContainsEvaluator(
+        EvaluatorConfig(type="contains", expected=["café", "STRASSE"])
+    )
+
+    result = evaluator.evaluate(_make_context("Ein café an der Straße"))
+
+    assert result.passed is True
+    assert result.score == 1.0
+
+
+def test_contains_case_sensitive_still_distinguishes_case_but_not_composition():
+    config = {"case_sensitive": True}
+    evaluator = ContainsEvaluator(
+        EvaluatorConfig(type="contains", expected="Café", options=config)
+    )
+
+    assert evaluator.evaluate(_make_context("Café open")).passed is True
+    assert evaluator.evaluate(_make_context("café open")).passed is False
