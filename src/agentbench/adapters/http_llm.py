@@ -10,6 +10,37 @@ from agentbench.adapters.base import AgentExecutionContext, AgentResponse, BaseA
 from agentbench.models.task import Task
 
 
+def _token_count(usage: dict[str, Any], key: str) -> int:
+    """Return a usage counter, or 0 when it is missing, null or not a count."""
+    value = usage.get(key)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return 0
+    return value
+
+
+def _message_text(content: Any) -> str:
+    """Return message text; typed parts ``[{"type": "text", "text": ...}]`` are joined."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            part["text"]
+            for part in content
+            if isinstance(part, dict) and isinstance(part.get("text"), str)
+        )
+    return ""
+
+
+def _error_detail(resp_data: dict[str, Any]) -> str | None:
+    """The server's error text when a reply carries an ``error`` instead of choices."""
+    error = resp_data.get("error")
+    if isinstance(error, dict):
+        return str(error.get("message") or error)
+    if isinstance(error, str) and error:
+        return error
+    return None
+
+
 class GenericLLMAgent(BaseAgent):
     """Generic HTTP LLM adapter that speaks OpenAI-compatible chat completion endpoints.
 
@@ -107,32 +138,61 @@ class GenericLLMAgent(BaseAgent):
             )
 
         # Extract usage
-        # Servers may send explicit nulls, so `or` rather than `get` defaults.
-        usage_info = resp_data.get("usage") or {}
-        prompt_tokens = usage_info.get("prompt_tokens") or 0
-        completion_tokens = usage_info.get("completion_tokens") or 0
+        # Servers may send explicit nulls or odd types, so only trust real counts.
+        usage_info = resp_data.get("usage")
+        if not isinstance(usage_info, dict):
+            usage_info = {}
         context.record_token_usage(
-            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens
+            prompt_tokens=_token_count(usage_info, "prompt_tokens"),
+            completion_tokens=_token_count(usage_info, "completion_tokens"),
         )
 
         # Extract choice and tool calls
         choices = resp_data.get("choices") or []
+        if not isinstance(choices, list):
+            raise RuntimeError(
+                "Unexpected response from LLM endpoint: 'choices' must be a list, "
+                f"got {type(choices).__name__}"
+            )
         if not choices:
+            detail = _error_detail(resp_data)
+            if detail:
+                raise RuntimeError(f"LLM endpoint returned an error: {detail}")
             return AgentResponse(output="", token_usage=context.token_usage)
 
+        if not isinstance(choices[0], dict):
+            raise RuntimeError(
+                "Unexpected response from LLM endpoint: a choice must be an object, "
+                f"got {type(choices[0]).__name__}"
+            )
         choice_msg = choices[0].get("message") or {}
-        content = choice_msg.get("content") or ""
+        if not isinstance(choice_msg, dict):
+            raise RuntimeError(
+                "Unexpected response from LLM endpoint: 'message' must be an object, "
+                f"got {type(choice_msg).__name__}"
+            )
+        content = _message_text(choice_msg.get("content"))
 
         # Check for tool calls returned by LLM
         tool_calls_raw = choice_msg.get("tool_calls") or []
+        if not isinstance(tool_calls_raw, list):
+            raise RuntimeError(
+                "Unexpected response from LLM endpoint: 'tool_calls' must be a list, "
+                f"got {type(tool_calls_raw).__name__}"
+            )
         for raw_tc in tool_calls_raw:
-            fn = raw_tc.get("function") or {}
+            fn = raw_tc.get("function") if isinstance(raw_tc, dict) else None
+            if not isinstance(fn, dict):
+                continue
             fn_name = fn.get("name") or ""
             raw_args = fn.get("arguments") or "{}"
-            try:
-                fn_args = json.loads(raw_args)
-            except Exception:
-                fn_args = None
+            if isinstance(raw_args, dict):
+                fn_args: Any = raw_args
+            else:
+                try:
+                    fn_args = json.loads(raw_args)
+                except Exception:
+                    fn_args = None
             if not isinstance(fn_args, dict):
                 # Tool input must be an object; keep what the model sent.
                 fn_args = {"raw": raw_args}
@@ -148,7 +208,7 @@ class GenericLLMAgent(BaseAgent):
             )
 
         return AgentResponse(
-            output=content if content else {"tool_calls": len(tool_calls_raw)},
+            output=content if content else {"tool_calls": len(context.tool_calls)},
             tool_calls=list(context.tool_calls),
             token_usage=context.token_usage,
         )

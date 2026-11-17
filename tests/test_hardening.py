@@ -331,3 +331,80 @@ def test_http_llm_base_url_resolution(monkeypatch):
     # An empty variable falls back to the default instead of an empty URL.
     monkeypatch.setenv("OPENAI_BASE_URL", "")
     assert GenericLLMAgent().base_url == "https://api.openai.com/v1"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "usage, total",
+    [
+        ({"prompt_tokens": "5", "completion_tokens": "3"}, 0),
+        ({"prompt_tokens": -5, "completion_tokens": 3}, 3),
+        ({"prompt_tokens": 1.5, "completion_tokens": 3}, 3),
+        ({"prompt_tokens": True, "completion_tokens": 3}, 3),
+        ([1, 2], 0),
+        ({"prompt_tokens": 5, "completion_tokens": 3}, 8),
+    ],
+)
+async def test_http_llm_only_counts_real_token_counts(usage, total):
+    reply = {"choices": [{"message": {"content": "hi"}}], "usage": usage}
+
+    resp = await _run_http_llm(reply)
+
+    assert resp.token_usage.total_tokens == total
+
+
+@pytest.mark.asyncio
+async def test_http_llm_joins_typed_content_parts():
+    parts = [
+        {"type": "text", "text": "Hello, "},
+        {"type": "image_url", "image_url": {"url": "x"}},
+        {"type": "text", "text": "world"},
+    ]
+
+    resp = await _run_http_llm({"choices": [{"message": {"content": parts}}]})
+
+    assert resp.output == "Hello, world"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "reply, message",
+    [
+        ({"error": {"message": "model overloaded"}}, "model overloaded"),
+        ({"error": "quota exceeded"}, "quota exceeded"),
+        ({"choices": {"a": 1}}, "'choices' must be a list"),
+        ({"choices": ["x"]}, "a choice must be an object"),
+        ({"choices": [{"message": "hi"}]}, "'message' must be an object"),
+        (
+            {"choices": [{"message": {"tool_calls": "oops"}}]},
+            "'tool_calls' must be a list",
+        ),
+    ],
+)
+async def test_http_llm_reports_unusable_replies(reply, message):
+    with pytest.raises(RuntimeError, match=message):
+        await _run_http_llm(reply)
+
+
+@pytest.mark.asyncio
+async def test_http_llm_skips_malformed_tool_calls_and_accepts_object_arguments():
+    reply = {
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [
+                        "oops",
+                        {"function": "f"},
+                        {"function": {"name": "lookup", "arguments": {"q": "x"}}},
+                    ]
+                }
+            }
+        ]
+    }
+
+    resp = await _run_http_llm(reply)
+
+    assert [(c.tool_name, c.tool_input) for c in resp.tool_calls] == [
+        ("lookup", {"q": "x"})
+    ]
+    assert resp.output == {"tool_calls": 1}
