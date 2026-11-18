@@ -101,6 +101,60 @@ def test_json_schema_evaluator():
     assert res3.passed is False
 
 
+def test_json_schema_falls_back_to_task_expected_output():
+    evaluator = JSONSchemaEvaluator(EvaluatorConfig(type="json_schema"))
+    expected = {"status": "ok"}
+
+    assert evaluator.evaluate(
+        _make_context('{"status": "ok"}', expected=expected)
+    ).passed
+    wrong = evaluator.evaluate(_make_context('{"status": "bad"}', expected=expected))
+    assert wrong.passed is False
+    assert "Value mismatches" in wrong.reason
+    missing = evaluator.evaluate(_make_context('{"other": 1}', expected=expected))
+    assert missing.passed is False
+    assert "Missing required keys" in missing.reason
+
+
+def test_json_schema_evaluator_config_expected_wins_over_task():
+    evaluator = JSONSchemaEvaluator(
+        EvaluatorConfig(type="json_schema", expected={"a": 1})
+    )
+    result = evaluator.evaluate(_make_context('{"a": 1}', expected={"a": 2}))
+    assert result.passed is True
+
+
+def test_json_schema_string_required_keys_is_one_key():
+    evaluator = JSONSchemaEvaluator(
+        EvaluatorConfig(type="json_schema", options={"required_keys": "name"})
+    )
+    assert evaluator.evaluate(_make_context('{"name": "x"}')).passed is True
+    result = evaluator.evaluate(_make_context('{"n": 1, "a": 1, "m": 1, "e": 1}'))
+    assert result.passed is False
+    assert "['name']" in result.reason
+
+
+def test_json_schema_invalid_required_keys_fails_clearly():
+    evaluator = JSONSchemaEvaluator(
+        EvaluatorConfig(type="json_schema", options={"required_keys": 5})
+    )
+    result = evaluator.evaluate(_make_context('{"a": 1}'))
+    assert result.passed is False
+    assert "required_keys" in result.reason
+
+
+def test_regex_evaluator_case_insensitive_and_dotall():
+    config = EvaluatorConfig(
+        type="regex",
+        expected="^hello.*world$",
+        options={"case_sensitive": False, "dotall": True},
+    )
+    evaluator = RegexEvaluator(config)
+    assert evaluator.evaluate(_make_context("HELLO\nbig\nWORLD")).passed is True
+    strict = RegexEvaluator(EvaluatorConfig(type="regex", expected="^hello.*world$"))
+    assert strict.evaluate(_make_context("HELLO\nbig\nWORLD")).passed is False
+
+
 def test_numeric_tolerance_evaluator():
     evaluator = NumericToleranceEvaluator(
         EvaluatorConfig(
