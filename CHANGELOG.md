@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The `json_schema` evaluator falls back to the task's `expected_output` when it has no `expected` (previously any JSON object passed), treats a string `required_keys` as one key instead of its characters, and fails with a clear reason for other non-list values (#56).
 - `GenericLLMAgent` counts tokens only from non-negative integers (string counts were concatenated, so `"5"` + `"3"` gave 53), joins typed `content` parts into text, raises a clear error for a reply that carries an `error` instead of choices or has wrongly typed `choices`, `message` or `tool_calls`, skips malformed tool-call entries, and accepts tool `arguments` that are already an object (#54).
 - The `numeric_tolerance` evaluator passes equal infinities, and fails with a clear reason for a negative, NaN or non-numeric `tolerance` and for boolean values instead of crashing or accepting `True` as `1` (#51).
 - `contains` and `regex` evaluators no longer treat falsy outputs (`0`, `0.0`, `False`) or an `expected: 0` pattern as empty text; only `None` means no output (#48).
