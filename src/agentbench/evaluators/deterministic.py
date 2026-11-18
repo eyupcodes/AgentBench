@@ -208,16 +208,32 @@ class JSONSchemaEvaluator(BaseEvaluator):
                 reason=f"Expected JSON object (dict), received {type(actual).__name__}",
             )
 
+        expected = (
+            self.config.expected
+            if self.config.expected is not None
+            else context.task.expected_output
+        )
         required_keys = self.config.options.get("required_keys", [])
-        if not required_keys and isinstance(self.config.expected, dict):
-            required_keys = list(self.config.expected.keys())
+        if isinstance(required_keys, str):
+            required_keys = [required_keys]
+        elif not isinstance(required_keys, list):
+            return EvaluationResult(
+                evaluator_type="json_schema",
+                passed=False,
+                score=0.0,
+                expected=expected,
+                actual=actual,
+                reason="Option 'required_keys' must be a list of key names",
+            )
+        if not required_keys and isinstance(expected, dict):
+            required_keys = list(expected.keys())
 
         missing_keys = [k for k in required_keys if k not in actual]
 
         # Check expected field values if provided in expected dict
         mismatched_values = []
-        if isinstance(self.config.expected, dict):
-            for k, exp_v in self.config.expected.items():
+        if isinstance(expected, dict):
+            for k, exp_v in expected.items():
                 if k in actual and actual[k] != exp_v:
                     mismatched_values.append(f"{k}: expected {exp_v}, got {actual[k]}")
 
@@ -232,7 +248,7 @@ class JSONSchemaEvaluator(BaseEvaluator):
             evaluator_type="json_schema",
             passed=passed,
             score=1.0 if passed else 0.0,
-            expected=self.config.expected or {"required_keys": required_keys},
+            expected=expected or {"required_keys": required_keys},
             actual=actual,
             reason="JSON structure and values valid" if passed else "; ".join(reasons),
         )
