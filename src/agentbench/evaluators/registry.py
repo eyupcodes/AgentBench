@@ -1,5 +1,7 @@
 """Evaluator registry and factory."""
 
+from typing import cast
+
 from agentbench.evaluators.base import BaseEvaluator
 from agentbench.evaluators.custom import CustomEvaluator
 from agentbench.evaluators.deterministic import (
@@ -50,7 +52,7 @@ def get_evaluator(config: EvaluatorConfig) -> BaseEvaluator:
         cls = getattr(module, class_name)
         if not issubclass(cls, BaseEvaluator):
             raise TypeError(f"Class {cls} must inherit from BaseEvaluator")
-        return cls(config=config)
+        return cast("BaseEvaluator", cls(config=config))
 
     available = ", ".join(list_evaluators())
     raise KeyError(
