@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `mypy` runs in strict mode, and CI fails when branch coverage drops below 90% (the gate was 80% on line coverage) (#58).
+
 ### Fixed
 - The `json_schema` evaluator falls back to the task's `expected_output` when it has no `expected` (previously any JSON object passed), treats a string `required_keys` as one key instead of its characters, and fails with a clear reason for other non-list values (#56).
 - `GenericLLMAgent` counts tokens only from non-negative integers (string counts were concatenated, so `"5"` + `"3"` gave 53), joins typed `content` parts into text, raises a clear error for a reply that carries an `error` instead of choices or has wrongly typed `choices`, `message` or `tool_calls`, skips malformed tool-call entries, and accepts tool `arguments` that are already an object (#54).
