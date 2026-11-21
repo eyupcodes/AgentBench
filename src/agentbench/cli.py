@@ -13,6 +13,7 @@ from agentbench import __version__
 from agentbench.adapters.registry import get_adapter, list_adapters
 from agentbench.evaluators.registry import list_evaluators
 from agentbench.loader import load_suite, save_suite
+from agentbench.models.event import AgentEvent
 from agentbench.models.task import (
     EvaluatorConfig,
     Task,
@@ -149,7 +150,7 @@ def run(
         f"'[bold green]{escape(agent_instance.name)}[/]'"
     )
 
-    def _event_logger(ev):
+    def _event_logger(ev: AgentEvent) -> None:
         if verbose:
             msg = ev.message or f"Event: {ev.event_type.value}"
             console.print(

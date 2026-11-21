@@ -2,7 +2,7 @@
 
 import importlib
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from agentbench.evaluators.base import BaseEvaluator, EvaluationContext
 from agentbench.models.result import EvaluationResult
@@ -15,7 +15,7 @@ def _import_callable(path: str) -> Callable[[EvaluationContext], Any]:
     fn = getattr(importlib.import_module(module_path), fn_name)
     if not callable(fn):
         raise TypeError(f"'{path}' is not callable")
-    return fn
+    return cast("Callable[[EvaluationContext], Any]", fn)
 
 
 class CustomEvaluator(BaseEvaluator):

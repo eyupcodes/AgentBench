@@ -1,6 +1,6 @@
 """Registry for agent adapters."""
 
-from typing import Any
+from typing import Any, cast
 
 from agentbench.adapters.base import BaseAgent
 from agentbench.adapters.http_llm import GenericLLMAgent
@@ -39,7 +39,7 @@ def get_adapter(name_or_alias: str, **kwargs: Any) -> BaseAgent:
         cls = getattr(module, class_name)
         if not issubclass(cls, BaseAgent):
             raise TypeError(f"Class {cls} must inherit from BaseAgent")
-        return cls(**kwargs)
+        return cast("BaseAgent", cls(**kwargs))
 
     available = ", ".join(list_adapters())
     raise KeyError(

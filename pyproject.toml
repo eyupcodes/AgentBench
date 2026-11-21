@@ -68,15 +68,15 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["agentbench"]
+branch = true
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 90
 show_missing = true
 
 [tool.mypy]
 python_version = "3.10"
-check_untyped_defs = true
-warn_unused_ignores = true
+strict = true
 plugins = ["pydantic.mypy"]
 files = ["src"]
 
