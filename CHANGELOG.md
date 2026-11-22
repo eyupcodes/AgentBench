@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Dependabot proposes monthly, grouped updates for GitHub Actions and pip dependencies; CI uses a read-only `contents` token and cancels superseded runs of the same ref (#60).
 - `mypy` runs in strict mode, and CI fails when branch coverage drops below 90% (the gate was 80% on line coverage) (#58).
 
 ### Fixed
