@@ -41,6 +41,24 @@ def _error_detail(resp_data: dict[str, Any]) -> str | None:
     return None
 
 
+_MAX_ERROR_BODY_BYTES = 2000
+
+
+def _http_error_text(error: urllib.error.HTTPError) -> str:
+    """A short, always-decodable excerpt of an HTTP error body.
+
+    Reads at most ``_MAX_ERROR_BODY_BYTES + 1`` bytes, decodes leniently (gateways
+    often answer in a legacy encoding) and collapses whitespace, so the error
+    keeps its status code and a huge HTML page cannot flood the report.
+    """
+    try:
+        raw = error.read(_MAX_ERROR_BODY_BYTES + 1)
+    except Exception:  # noqa: BLE001 - the body is optional context
+        return ""
+    text = " ".join(raw[:_MAX_ERROR_BODY_BYTES].decode("utf-8", "replace").split())
+    return text + "..." if len(raw) > _MAX_ERROR_BODY_BYTES else text
+
+
 class GenericLLMAgent(BaseAgent):
     """Generic HTTP LLM adapter that speaks OpenAI-compatible chat completion endpoints.
 
@@ -126,8 +144,7 @@ class GenericLLMAgent(BaseAgent):
             with urllib.request.urlopen(req, timeout=task.timeout_seconds) as resp:
                 resp_data = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
-            err_msg = e.read().decode("utf-8")
-            raise RuntimeError(f"HTTP Error {e.code}: {err_msg}") from e
+            raise RuntimeError(f"HTTP Error {e.code}: {_http_error_text(e)}") from e
         except Exception as e:
             raise RuntimeError(f"Failed to query LLM endpoint: {e}") from e
 

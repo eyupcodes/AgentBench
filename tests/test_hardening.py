@@ -88,6 +88,46 @@ async def test_http_llm_mocked_http_error():
             await agent.run(task, context)
 
 
+@pytest.mark.asyncio
+async def test_http_llm_non_utf8_error_body_keeps_status():
+    mock_error = urllib.error.HTTPError(
+        url="https://gw.example/v1/chat/completions",
+        code=502,
+        msg="Bad Gateway",
+        hdrs={},
+        fp=io.BytesIO("Passerelle d\xe9faillante".encode("latin-1")),
+    )
+
+    with patch("urllib.request.urlopen", side_effect=mock_error):
+        agent = GenericLLMAgent(api_key="k")
+        task = Task(id="t1", name="Task 1", prompt="Hello")
+        context = AgentExecutionContext(task=task)
+
+        with pytest.raises(RuntimeError, match="HTTP Error 502: Passerelle d"):
+            await agent.run(task, context)
+
+
+@pytest.mark.asyncio
+async def test_http_llm_oversized_error_body_is_truncated():
+    mock_error = urllib.error.HTTPError(
+        url="https://gw.example/v1/chat/completions",
+        code=503,
+        msg="Service Unavailable",
+        hdrs={},
+        fp=io.BytesIO(b"<html>" + b"x" * 100_000 + b"</html>"),
+    )
+
+    with patch("urllib.request.urlopen", side_effect=mock_error):
+        agent = GenericLLMAgent(api_key="k")
+        task = Task(id="t1", name="Task 1", prompt="Hello")
+        context = AgentExecutionContext(task=task)
+
+        with pytest.raises(RuntimeError, match="HTTP Error 503") as excinfo:
+            await agent.run(task, context)
+    assert len(str(excinfo.value)) < 2100
+    assert str(excinfo.value).endswith("...")
+
+
 def test_loader_file_not_found():
     with pytest.raises(FileNotFoundError):
         load_suite("non_existent_file.yaml")
