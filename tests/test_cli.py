@@ -432,3 +432,47 @@ def test_cli_run_preflight_creates_nothing_when_it_fails(tmp_path):
 
     assert result.exit_code == 1
     assert not missing.parent.exists()
+
+
+@pytest.mark.parametrize("flag", ["--output", "--export-md"])
+def test_cli_run_refuses_report_that_is_the_suite(tmp_path, flag):
+    suite_path = _write_suite(tmp_path)
+    before = suite_path.read_text(encoding="utf-8")
+
+    result = runner.invoke(
+        app, ["run", "-s", str(suite_path), "-a", "scripted", flag, str(suite_path)]
+    )
+
+    assert result.exit_code == 1
+    assert f"{flag} must not be the same file as --suite" in result.output
+    assert "Running suite" not in result.output
+    assert suite_path.read_text(encoding="utf-8") == before
+
+
+def test_cli_run_refuses_suite_given_by_another_spelling(tmp_path):
+    suite_path = _write_suite(tmp_path)
+    (tmp_path / "sub").mkdir()
+    respelled = tmp_path / "sub" / ".." / suite_path.name
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted", "-o", str(respelled)],
+    )
+
+    assert result.exit_code == 1
+    assert "must not be the same file as --suite" in result.output
+
+
+def test_cli_run_refuses_both_reports_at_one_path(tmp_path):
+    suite_path = _write_suite(tmp_path)
+    report = tmp_path / "report.out"
+
+    result = runner.invoke(
+        app,
+        ["run", "-s", str(suite_path), "-a", "scripted"]
+        + ["--output", str(report), "--export-md", str(report)],
+    )
+
+    assert result.exit_code == 1
+    assert "--export-md must not be the same file as --output" in result.output
+    assert not report.exists()

@@ -67,6 +67,29 @@ def _check_output_path(path: Path | None) -> None:
         raise typer.Exit(code=1)
 
 
+def _same_file(first: Path, second: Path) -> bool:
+    if first.exists() and second.exists():
+        return os.path.samefile(first, second)
+    return first.absolute().resolve() == second.absolute().resolve()
+
+
+def _check_distinct_outputs(
+    suite: Path, output: Path | None, export_md: Path | None
+) -> None:
+    """Exit before any task runs if a report would overwrite the suite or the other report."""
+    pairs = [("--output", output, "--suite", suite)]
+    pairs.append(("--export-md", export_md, "--suite", suite))
+    if output is not None and export_md is not None:
+        pairs.append(("--export-md", export_md, "--output", output))
+    for name, path, other_name, other in pairs:
+        if path is not None and _same_file(path, other):
+            console.print(
+                f"[bold red]{name} must not be the same file as {other_name}:[/] "
+                f"{escape(str(path))}"
+            )
+            raise typer.Exit(code=1)
+
+
 @app.command()
 def run(
     suite: Path = typer.Option(
@@ -118,6 +141,7 @@ def run(
     ),
 ) -> None:
     """Run a benchmark suite against an agent adapter."""
+    _check_distinct_outputs(suite, output, export_md)
     _check_output_path(output)
     _check_output_path(export_md)
 
