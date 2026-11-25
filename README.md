@@ -163,6 +163,10 @@ tasks:
           amount: 45.0
 ```
 
+`max_retries` sets the maximum total number of attempts, including the initial attempt.
+A task that omits it inherits `default_max_retries` from the suite.
+The default of `1` runs the task once without retrying, and `2` allows one retry.
+
 `json_schema` checks the evaluator's `expected` object (or, if it has none, the task's `expected_output`); `options.required_keys` lists keys that must be present.
 
 Each evaluator accepts an optional `weight` (default `1`, must be `>= 0`). A task's `overall_score` is the weighted mean of its evaluator scores; a task still passes only if every evaluator passes.
